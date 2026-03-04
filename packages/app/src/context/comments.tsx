@@ -7,6 +7,9 @@ import { createScopedCache } from "@/utils/scoped-cache"
 import { uuid } from "@/utils/uuid"
 import type { SelectedLineRange } from "@/context/file"
 
+/**
+ * 行注释
+ */
 export type LineComment = {
   id: string
   file: string
@@ -20,10 +23,16 @@ type CommentFocus = { file: string; id: string }
 const WORKSPACE_KEY = "__workspace__"
 const MAX_COMMENT_SESSIONS = 20
 
+/**
+ * 生成评论会话键
+ */
 function sessionKey(dir: string, id: string | undefined) {
   return `${dir}\n${id ?? WORKSPACE_KEY}`
 }
 
+/**
+ * 解析评论会话键
+ */
 function decodeSessionKey(key: string) {
   const split = key.lastIndexOf("\n")
   if (split < 0) return { dir: key, id: WORKSPACE_KEY }
@@ -33,10 +42,16 @@ function decodeSessionKey(key: string) {
   }
 }
 
+/**
+ * 评论存储
+ */
 type CommentStore = {
   comments: Record<string, LineComment[]>
 }
 
+/**
+ * 聚合所有评论（按时间排序）
+ */
 function aggregate(comments: Record<string, LineComment[]>) {
   return Object.keys(comments)
     .flatMap((file) => comments[file] ?? [])
@@ -44,6 +59,9 @@ function aggregate(comments: Record<string, LineComment[]>) {
     .sort((a, b) => a.time - b.time)
 }
 
+/**
+ * 克隆选区
+ */
 function cloneSelection(selection: SelectedLineRange): SelectedLineRange {
   const next: SelectedLineRange = {
     start: selection.start,
@@ -55,6 +73,9 @@ function cloneSelection(selection: SelectedLineRange): SelectedLineRange {
   return next
 }
 
+/**
+ * 克隆评论
+ */
 function cloneComment(comment: LineComment): LineComment {
   return {
     ...comment,
@@ -62,6 +83,9 @@ function cloneComment(comment: LineComment): LineComment {
   }
 }
 
+/**
+ * 按文件分组评论
+ */
 function group(comments: LineComment[]) {
   return comments.reduce<Record<string, LineComment[]>>((acc, comment) => {
     const list = acc[comment.file]
@@ -75,6 +99,9 @@ function group(comments: LineComment[]) {
   }, {})
 }
 
+/**
+ * 创建评论会话状态管理
+ */
 function createCommentSessionState(store: Store<CommentStore>, setStore: SetStoreFunction<CommentStore>) {
   const [state, setState] = createStore({
     focus: null as CommentFocus | null,
@@ -166,6 +193,9 @@ export function createCommentSessionForTest(comments: Record<string, LineComment
   return createCommentSessionState(store, setStore)
 }
 
+/**
+ * 创建评论会话
+ */
 function createCommentSession(dir: string, id: string | undefined) {
   const legacy = `${dir}/comments${id ? "/" + id : ""}.v1`
 

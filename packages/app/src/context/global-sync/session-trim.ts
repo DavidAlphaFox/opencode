@@ -2,10 +2,16 @@ import type { PermissionRequest, Session } from "@opencode-ai/sdk/v2/client"
 import { cmp } from "./utils"
 import { SESSION_RECENT_LIMIT, SESSION_RECENT_WINDOW } from "./types"
 
+/**
+ * 获取会话的最后更新时间
+ */
 export function sessionUpdatedAt(session: Session) {
   return session.time.updated ?? session.time.created
 }
 
+/**
+ * 比较两个会话的新旧程度
+ */
 export function compareSessionRecent(a: Session, b: Session) {
   const aUpdated = sessionUpdatedAt(a)
   const bUpdated = sessionUpdatedAt(b)
@@ -13,6 +19,9 @@ export function compareSessionRecent(a: Session, b: Session) {
   return cmp(a.id, b.id)
 }
 
+/**
+ * 从会话列表中选取最近的会话
+ */
 export function takeRecentSessions(sessions: Session[], limit: number, cutoff: number) {
   if (limit <= 0) return [] as Session[]
   const selected: Session[] = []
@@ -30,6 +39,9 @@ export function takeRecentSessions(sessions: Session[], limit: number, cutoff: n
   return selected
 }
 
+/**
+ * 裁剪会话列表，保持根会话数量限制并保留最近的会话
+ */
 export function trimSessions(
   input: Session[],
   options: { limit: number; permission: Record<string, PermissionRequest[]>; now?: number },

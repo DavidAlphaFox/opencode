@@ -8,6 +8,9 @@ const WORKSPACE_KEY = "__workspace__"
 const MAX_FILE_VIEW_SESSIONS = 20
 const MAX_VIEW_FILES = 500
 
+/**
+ * 规范化选中的行范围（确保起始行小于结束行）
+ */
 function normalizeSelectedLines(range: SelectedLineRange): SelectedLineRange {
   if (range.start <= range.end) return { ...range }
 
@@ -23,6 +26,9 @@ function normalizeSelectedLines(range: SelectedLineRange): SelectedLineRange {
   }
 }
 
+/**
+ * 比较两个行范围是否相等
+ */
 function equalSelectedLines(a: SelectedLineRange | null | undefined, b: SelectedLineRange | null | undefined) {
   if (!a && !b) return true
   if (!a || !b) return false
@@ -33,6 +39,9 @@ function equalSelectedLines(a: SelectedLineRange | null | undefined, b: Selected
   )
 }
 
+/**
+ * 创建视图会话，管理单个工作区/会话的文件视图状态
+ */
 function createViewSession(dir: string, id: string | undefined) {
   const legacyViewKey = `${dir}/file${id ? "/" + id : ""}.v1`
 
@@ -119,6 +128,10 @@ function createViewSession(dir: string, id: string | undefined) {
   }
 }
 
+/**
+ * 创建文件视图缓存管理器
+ * 管理和持久化所有工作区的文件视图状态
+ */
 export function createFileViewCache() {
   const cache = createScopedCache(
     (key) => {

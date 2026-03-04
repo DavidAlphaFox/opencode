@@ -3,16 +3,25 @@ import { createStore } from "solid-js/store"
 import { getSpeechRecognitionCtor } from "@/utils/runtime-adapters"
 
 // Minimal types to avoid relying on non-standard DOM typings
+/**
+ * 识别结果类型
+ */
 type RecognitionResult = {
   0: { transcript: string }
   isFinal: boolean
 }
 
+/**
+ * 识别事件类型
+ */
 type RecognitionEvent = {
   results: RecognitionResult[]
   resultIndex: number
 }
 
+/**
+ * 语音识别接口
+ */
 interface Recognition {
   continuous: boolean
   interimResults: boolean
@@ -27,6 +36,12 @@ interface Recognition {
 
 const COMMIT_DELAY = 250
 
+/**
+ * 追加文本片段
+ * @param base 基础文本
+ * @param addition 要添加的文本
+ * @returns 合并后的文本
+ */
 const appendSegment = (base: string, addition: string) => {
   const trimmed = addition.trim()
   if (!trimmed) return base
@@ -35,6 +50,12 @@ const appendSegment = (base: string, addition: string) => {
   return `${base}${needsSpace ? " " : ""}${trimmed}`
 }
 
+/**
+ * 从假设文本中提取相对于已提交文本的后缀
+ * @param committed 已提交的文本
+ * @param hypothesis 假设文本
+ * @returns 提取的后缀
+ */
 const extractSuffix = (committed: string, hypothesis: string) => {
   const cleanHypothesis = hypothesis.trim()
   if (!cleanHypothesis) return ""
@@ -52,6 +73,13 @@ const extractSuffix = (committed: string, hypothesis: string) => {
   return hypothesisTokens.slice(index).join(" ")
 }
 
+/**
+ * 创建语音识别实例
+ * @param lang 识别语言
+ * @param onFinal 识别完成回调
+ * @param onInterim 临时结果回调
+ * @returns 语音识别控制接口
+ */
 export function createSpeechRecognition(opts?: {
   lang?: string
   onFinal?: (text: string) => void

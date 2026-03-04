@@ -1,7 +1,13 @@
 import type { Message, Part } from "@opencode-ai/sdk/v2/client"
 
+/**
+ * 会话上下文分类键值
+ */
 export type SessionContextBreakdownKey = "system" | "user" | "assistant" | "tool" | "other"
 
+/**
+ * 会话上下文分段
+ */
 export type SessionContextBreakdownSegment = {
   key: SessionContextBreakdownKey
   tokens: number
@@ -9,10 +15,30 @@ export type SessionContextBreakdownSegment = {
   percent: number
 }
 
+/**
+ * 根据字符数估算 token 数量
+ * @param chars 字符数
+ */
 const estimateTokens = (chars: number) => Math.ceil(chars / 4)
+
+/**
+ * 计算百分比
+ * @param tokens token 数量
+ * @param input 输入总数
+ */
 const toPercent = (tokens: number, input: number) => (tokens / input) * 100
+
+/**
+ * 计算百分比标签
+ * @param tokens token 数量
+ * @param input 输入总数
+ */
 const toPercentLabel = (tokens: number, input: number) => Math.round(toPercent(tokens, input) * 10) / 10
 
+/**
+ * 从用户部分获取字符数
+ * @param part 消息部分
+ */
 const charsFromUserPart = (part: Part) => {
   if (part.type === "text") return part.text.length
   if (part.type === "file") return part.source?.text.value.length ?? 0
@@ -20,6 +46,10 @@ const charsFromUserPart = (part: Part) => {
   return 0
 }
 
+/**
+ * 从助手部分获取字符数
+ * @param part 消息部分
+ */
 const charsFromAssistantPart = (part: Part) => {
   if (part.type === "text") return { assistant: part.text.length, tool: 0 }
   if (part.type === "reasoning") return { assistant: part.text.length, tool: 0 }
@@ -32,6 +62,11 @@ const charsFromAssistantPart = (part: Part) => {
   return { assistant: 0, tool: input }
 }
 
+/**
+ * 构建上下文分段数据
+ * @param tokens 各类型 token 统计
+ * @param input 输入总数
+ */
 const build = (
   tokens: { system: number; user: number; assistant: number; tool: number; other: number },
   input: number,
@@ -67,6 +102,10 @@ const build = (
     })) as SessionContextBreakdownSegment[]
 }
 
+/**
+ * 估算会话上下文分类
+ * @param args 估算参数
+ */
 export function estimateSessionContextBreakdown(args: {
   messages: Message[]
   parts: Record<string, Part[] | undefined>

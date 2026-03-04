@@ -2,12 +2,34 @@ import { createSimpleContext } from "@opencode-ai/ui/context"
 import type { AsyncStorage, SyncStorage } from "@solid-primitives/storage"
 import type { Accessor } from "solid-js"
 
+/**
+ * 路径选择器类型
+ */
 type PickerPaths = string | string[] | null
+
+/**
+ * 打开目录选择器选项
+ */
 type OpenDirectoryPickerOptions = { title?: string; multiple?: boolean }
+
+/**
+ * 打开文件选择器选项
+ */
 type OpenFilePickerOptions = { title?: string; multiple?: boolean }
+
+/**
+ * 保存文件选择器选项
+ */
 type SaveFilePickerOptions = { title?: string; defaultPath?: string }
+
+/**
+ * 更新信息
+ */
 type UpdateInfo = { updateAvailable: boolean; version?: string }
 
+/**
+ * 平台接口
+ */
 export type Platform = {
   /** Platform discriminator */
   platform: "web" | "desktop"

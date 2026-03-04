@@ -1,3 +1,6 @@
+/**
+ * 文件标签页滚动同步配置输入参数
+ */
 type Input = {
   prevScrollWidth: number
   scrollWidth: number
@@ -6,6 +9,11 @@ type Input = {
   contextOpen: boolean
 }
 
+/**
+ * 计算标签页列表的目标滚动位置
+ * @param input - 包含滚动宽度和上下文状态的对象
+ * @returns 目标滚动位置，无需滚动则返回 undefined
+ */
 export const nextTabListScrollLeft = (input: Input) => {
   if (input.scrollWidth <= input.prevScrollWidth) return
   if (!input.prevContextOpen && input.contextOpen) return 0
@@ -13,6 +21,11 @@ export const nextTabListScrollLeft = (input: Input) => {
   return input.scrollWidth - input.clientWidth
 }
 
+/**
+ * 创建文件标签页列表同步控制器
+ * @param input - 包含 DOM 元素和上下文状态方法的配置对象
+ * @returns 清理函数
+ */
 export const createFileTabListSync = (input: { el: HTMLDivElement; contextOpen: () => boolean }) => {
   let frame: number | undefined
   let prevScrollWidth = input.el.scrollWidth

@@ -10,6 +10,10 @@ import { useSDK } from "@/context/sdk"
 import { useSync } from "@/context/sync"
 import { sessionPermissionRequest, sessionQuestionRequest } from "./session-request-tree"
 
+/**
+ * 创建会话编辑器阻止状态判断函数
+ * @returns 是否被阻止（有待处理权限请求或问题请求）
+ */
 export function createSessionComposerBlocked() {
   const params = useParams()
   const permission = usePermission()
@@ -29,6 +33,11 @@ export function createSessionComposerBlocked() {
   })
 }
 
+/**
+ * 创建会话编辑器的状态管理
+ * @param options - 可选配置项
+ * @returns 会话编辑器状态接口
+ */
 export function createSessionComposerState(options?: { closeMs?: number | (() => number) }) {
   const params = useParams()
   const sdk = useSDK()
@@ -176,4 +185,7 @@ export function createSessionComposerState(options?: { closeMs?: number | (() =>
   }
 }
 
+/**
+ * 会话编辑器状态类型
+ */
 export type SessionComposerState = ReturnType<typeof createSessionComposerState>

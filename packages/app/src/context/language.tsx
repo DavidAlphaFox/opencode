@@ -38,6 +38,9 @@ import { dict as uiTh } from "@opencode-ai/ui/i18n/th"
 import { dict as uiBs } from "@opencode-ai/ui/i18n/bs"
 import { dict as uiTr } from "@opencode-ai/ui/i18n/tr"
 
+/**
+ * 支持的语言区域
+ */
 export type Locale =
   | "en"
   | "zh"
@@ -57,9 +60,15 @@ export type Locale =
   | "bs"
   | "tr"
 
+/**
+ * 原始字典类型
+ */
 type RawDictionary = typeof en & typeof uiEn
 type Dictionary = i18n.Flatten<RawDictionary>
 
+/**
+ * 生成语言Cookie
+ */
 function cookie(locale: Locale) {
   return `oc_locale=${encodeURIComponent(locale)}; Path=/; Max-Age=31536000; SameSite=Lax`
 }
@@ -168,6 +177,9 @@ const PARITY_CHECK: Record<Exclude<Locale, "en">, Record<ParityKey, string>> = {
 }
 void PARITY_CHECK
 
+/**
+ * 检测浏览器语言
+ */
 function detectLocale(): Locale {
   if (typeof navigator !== "object") return "en"
 
@@ -182,6 +194,9 @@ function detectLocale(): Locale {
   return "en"
 }
 
+/**
+ * 规范化语言区域值
+ */
 function normalizeLocale(value: string): Locale {
   return LOCALES.includes(value as Locale) ? (value as Locale) : "en"
 }

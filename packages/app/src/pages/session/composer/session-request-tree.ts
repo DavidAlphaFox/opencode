@@ -1,5 +1,13 @@
 import type { PermissionRequest, QuestionRequest, Session } from "@opencode-ai/sdk/v2/client"
 
+/**
+ * 从会话树中查找满足条件的请求项
+ * @param session - 会话列表
+ * @param request - 请求映射表
+ * @param sessionID - 当前会话 ID
+ * @param include - 过滤条件函数
+ * @returns 满足条件的请求项，未找到则返回 undefined
+ */
 function sessionTreeRequest<T>(
   session: Session[],
   request: Record<string, T[] | undefined>,
@@ -33,6 +41,14 @@ function sessionTreeRequest<T>(
   return request[id]?.find(include)
 }
 
+/**
+ * 从会话树中查找权限请求
+ * @param session - 会话列表
+ * @param request - 权限请求映射表
+ * @param sessionID - 当前会话 ID
+ * @param include - 可选的过滤条件
+ * @returns 权限请求项，未找到则返回 undefined
+ */
 export function sessionPermissionRequest(
   session: Session[],
   request: Record<string, PermissionRequest[] | undefined>,
@@ -42,6 +58,14 @@ export function sessionPermissionRequest(
   return sessionTreeRequest(session, request, sessionID, include)
 }
 
+/**
+ * 从会话树中查找问题请求
+ * @param session - 会话列表
+ * @param request - 问题请求映射表
+ * @param sessionID - 当前会话 ID
+ * @param include - 可选的过滤条件
+ * @returns 问题请求项，未找到则返回 undefined
+ */
 export function sessionQuestionRequest(
   session: Session[],
   request: Record<string, QuestionRequest[] | undefined>,

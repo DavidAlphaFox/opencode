@@ -1,10 +1,16 @@
 import type { FileNode } from "@opencode-ai/sdk/v2"
 
+/**
+ * 文件监视器事件
+ */
 type WatcherEvent = {
   type: string
   properties: unknown
 }
 
+/**
+ * 文件监视器操作接口
+ */
 type WatcherOps = {
   normalize: (input: string) => string
   hasFile: (path: string) => boolean
@@ -15,6 +21,10 @@ type WatcherOps = {
   refreshDir: (path: string) => void
 }
 
+/**
+ * 根据文件监视器事件刷新文件或目录
+ * 处理文件的添加、修改、删除事件
+ */
 export function invalidateFromWatcher(event: WatcherEvent, ops: WatcherOps) {
   if (event.type !== "file.watcher.updated") return
   const props =

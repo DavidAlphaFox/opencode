@@ -1,3 +1,6 @@
+/**
+ * 时间键类型
+ */
 type TimeKey =
   | "common.time.justNow"
   | "common.time.minutesAgo.short"
@@ -6,6 +9,12 @@ type TimeKey =
 
 type Translate = (key: TimeKey, params?: Record<string, string | number>) => string
 
+/**
+ * 获取相对时间字符串
+ * @param dateString 日期字符串
+ * @param t 翻译函数
+ * @returns 相对时间字符串
+ */
 export function getRelativeTime(dateString: string, t: Translate): string {
   const date = new Date(dateString)
   const now = new Date()

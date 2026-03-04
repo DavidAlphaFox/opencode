@@ -1,6 +1,11 @@
 import { createEffect, createMemo, onCleanup, onMount } from "solid-js"
 import { UserMessage } from "@opencode-ai/sdk/v2"
 
+/**
+ * 从 URL 哈希值中提取消息 ID
+ * @param hash - URL 哈希值
+ * @returns 消息 ID，未匹配则返回 undefined
+ */
 export const messageIdFromHash = (hash: string) => {
   const value = hash.startsWith("#") ? hash.slice(1) : hash
   const match = value.match(/^message-(.+)$/)
@@ -8,6 +13,11 @@ export const messageIdFromHash = (hash: string) => {
   return match[1]
 }
 
+/**
+ * 创建基于 URL 哈希的会话消息滚动控制器
+ * @param input - 包含会话状态和滚动相关方法的配置对象
+ * @returns 滚动控制接口
+ */
 export const useSessionHashScroll = (input: {
   sessionKey: () => string
   sessionID: () => string | undefined

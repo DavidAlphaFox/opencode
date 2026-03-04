@@ -39,8 +39,14 @@ function isAllowedEditableKeybind(id: string | undefined) {
   return EDITABLE_KEYBIND_IDS.has(actionId(id))
 }
 
+/**
+ * 键盘绑定配置（字符串格式）
+ */
 export type KeybindConfig = string
 
+/**
+ * 键盘绑定
+ */
 export interface Keybind {
   key: string
   ctrl: boolean
@@ -49,6 +55,9 @@ export interface Keybind {
   alt: boolean
 }
 
+/**
+ * 命令选项
+ */
 export interface CommandOption {
   id: string
   title: string
@@ -64,6 +73,9 @@ export interface CommandOption {
 
 type CommandSource = "palette" | "keybind" | "slash"
 
+/**
+ * 命令目录项（已注册命令的元数据）
+ */
 export type CommandCatalogItem = {
   title: string
   description?: string
@@ -72,16 +84,25 @@ export type CommandCatalogItem = {
   slash?: string
 }
 
+/**
+ * 命令注册信息
+ */
 export type CommandRegistration = {
   key?: string
   options: Accessor<CommandOption[]>
 }
 
+/**
+ * 更新或插入命令注册
+ */
 export function upsertCommandRegistration(registrations: CommandRegistration[], entry: CommandRegistration) {
   if (entry.key === undefined) return [entry, ...registrations]
   return [entry, ...registrations.filter((x) => x.key !== entry.key)]
 }
 
+/**
+ * 解析键盘绑定配置字符串
+ */
 export function parseKeybind(config: string): Keybind[] {
   if (!config || config === "none") return []
 
@@ -127,6 +148,9 @@ export function parseKeybind(config: string): Keybind[] {
   })
 }
 
+/**
+ * 检查键盘事件是否匹配给定键盘绑定
+ */
 export function matchKeybind(keybinds: Keybind[], event: KeyboardEvent): boolean {
   const eventKey = normalizeKey(event.key)
 
@@ -145,6 +169,9 @@ export function matchKeybind(keybinds: Keybind[], event: KeyboardEvent): boolean
   return false
 }
 
+/**
+ * 格式化键盘绑定为可显示的字符串
+ */
 export function formatKeybind(config: string): string {
   if (!config || config === "none") return ""
 

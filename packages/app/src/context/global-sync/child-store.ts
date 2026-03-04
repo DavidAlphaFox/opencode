@@ -15,6 +15,10 @@ import {
 } from "./types"
 import { canDisposeDirectory, pickDirectoriesToEvict } from "./eviction"
 
+/**
+ * 创建子存储管理器
+ * 负责管理多个目录的状态存储，包括VCS、元数据、图标缓存
+ */
 export function createChildStoreManager(input: {
   owner: Owner
   isBooting: (directory: string) => boolean
@@ -31,18 +35,27 @@ export function createChildStoreManager(input: {
   const ownerPins = new WeakMap<object, Set<string>>()
   const disposers = new Map<string, () => void>()
 
+  /**
+   * 标记目录被访问，更新最后访问时间
+   */
   const mark = (directory: string) => {
     if (!directory) return
     lifecycle.set(directory, { lastAccessAt: Date.now() })
     runEviction(directory)
   }
 
+  /**
+   * 固定目录，防止被清理
+   */
   const pin = (directory: string) => {
     if (!directory) return
     pins.set(directory, (pins.get(directory) ?? 0) + 1)
     mark(directory)
   }
 
+  /**
+   * 取消固定目录
+   */
   const unpin = (directory: string) => {
     if (!directory) return
     const next = (pins.get(directory) ?? 0) - 1
@@ -54,8 +67,14 @@ export function createChildStoreManager(input: {
     runEviction()
   }
 
+  /**
+   * 检查目录是否被固定
+   */
   const pinned = (directory: string) => (pins.get(directory) ?? 0) > 0
 
+  /**
+   * 为当前所有者固定目录，清理时自动解除
+   */
   const pinForOwner = (directory: string) => {
     const current = getOwner()
     if (!current) return
@@ -76,6 +95,9 @@ export function createChildStoreManager(input: {
     })
   }
 
+  /**
+   * 释放目录的存储和缓存
+   */
   function disposeDirectory(directory: string) {
     if (
       !canDisposeDirectory({
@@ -103,6 +125,9 @@ export function createChildStoreManager(input: {
     return true
   }
 
+  /**
+   * 运行清理任务，移除超时的目录存储
+   */
   function runEviction(skip?: string) {
     const stores = Object.keys(children)
     if (stores.length === 0) return
@@ -120,6 +145,9 @@ export function createChildStoreManager(input: {
     }
   }
 
+  /**
+   * 确保子存储存在，不存在则创建
+   */
   function ensureChild(directory: string) {
     if (!directory) console.error("No directory provided")
     if (!children[directory]) {
@@ -215,6 +243,9 @@ export function createChildStoreManager(input: {
     return childStore
   }
 
+  /**
+   * 获取子存储，自动固定目录
+   */
   function child(directory: string, options: ChildOptions = {}) {
     const childStore = ensureChild(directory)
     pinForOwner(directory)
@@ -225,6 +256,9 @@ export function createChildStoreManager(input: {
     return childStore
   }
 
+  /**
+   * 更新项目元数据
+   */
   function projectMeta(directory: string, patch: ProjectMeta) {
     const [store, setStore] = ensureChild(directory)
     const cached = metaCache.get(directory)
@@ -242,6 +276,9 @@ export function createChildStoreManager(input: {
     setStore("projectMeta", next)
   }
 
+  /**
+   * 更新项目图标
+   */
   function projectIcon(directory: string, value: string | undefined) {
     const [store, setStore] = ensureChild(directory)
     const cached = iconCache.get(directory)

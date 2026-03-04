@@ -1,5 +1,6 @@
 import type { FileSelection } from "@/context/file"
 
+/** 用户评论的数据结构 */
 export type PromptComment = {
   path: string
   selection?: FileSelection
@@ -23,6 +24,10 @@ function selection(selection: unknown) {
   } satisfies FileSelection
 }
 
+/**
+ * 创建评论元数据
+ * 将用户评论封装为 opencodeComment 格式
+ */
 export function createCommentMetadata(input: PromptComment) {
   return {
     opencodeComment: {
@@ -35,6 +40,10 @@ export function createCommentMetadata(input: PromptComment) {
   }
 }
 
+/**
+ * 读取评论元数据
+ * 从 opencodeComment 格式中解析出 PromptComment
+ */
 export function readCommentMetadata(value: unknown) {
   if (!value || typeof value !== "object") return
   const meta = (value as { opencodeComment?: unknown }).opencodeComment
@@ -53,6 +62,10 @@ export function readCommentMetadata(value: unknown) {
   } satisfies PromptComment
 }
 
+/**
+ * 格式化评论为文本描述
+ * 生成描述评论位置和内容的文本
+ */
 export function formatCommentNote(input: { path: string; selection?: FileSelection; comment: string }) {
   const start = input.selection ? Math.min(input.selection.startLine, input.selection.endLine) : undefined
   const end = input.selection ? Math.max(input.selection.startLine, input.selection.endLine) : undefined
@@ -65,6 +78,10 @@ export function formatCommentNote(input: { path: string; selection?: FileSelecti
   return `The user made the following comment regarding ${range} of ${input.path}: ${input.comment}`
 }
 
+/**
+ * 解析评论文本为结构化数据
+ * 从格式化的评论文本中提取路径、选区和评论内容
+ */
 export function parseCommentNote(text: string) {
   const match = text.match(
     /^The user made the following comment regarding (this file|line (\d+)|lines (\d+) through (\d+)) of (.+?): ([\s\S]+)$/,

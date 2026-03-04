@@ -43,6 +43,9 @@ export {
   touchFileContent,
 }
 
+/**
+ * 提取错误消息
+ */
 function errorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message
   if (typeof error === "string" && error) return error

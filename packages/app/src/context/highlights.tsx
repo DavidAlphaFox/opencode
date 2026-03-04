@@ -9,19 +9,31 @@ import { DialogReleaseNotes, type Highlight } from "@/components/dialog-release-
 
 const CHANGELOG_URL = "https://opencode.ai/changelog.json"
 
+/**
+ * 版本更新信息
+ */
 type Store = {
   version?: string
 }
 
+/**
+ * 解析的发布版本
+ */
 type ParsedRelease = {
   tag?: string
   highlights: Highlight[]
 }
 
+/**
+ * 检查值是否为普通对象
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
+/**
+ * 从值中提取文本
+ */
 function getText(value: unknown): string | undefined {
   if (typeof value === "string") {
     const text = value.trim()
@@ -32,12 +44,18 @@ function getText(value: unknown): string | undefined {
   return
 }
 
+/**
+ * 规范化版本号（移除v前缀）
+ */
 function normalizeVersion(value: string | undefined) {
   const text = value?.trim()
   if (!text) return
   return text.startsWith("v") || text.startsWith("V") ? text.slice(1) : text
 }
 
+/**
+ * 解析媒体（图片/视频）
+ */
 function parseMedia(value: unknown, alt: string): Highlight["media"] | undefined {
   if (!isRecord(value)) return
   const type = getText(value.type)?.toLowerCase()
@@ -48,6 +66,9 @@ function parseMedia(value: unknown, alt: string): Highlight["media"] | undefined
   return { type, src, alt }
 }
 
+/**
+ * 解析高亮项
+ */
 function parseHighlight(value: unknown): Highlight | undefined {
   if (!isRecord(value)) return
 
@@ -61,6 +82,9 @@ function parseHighlight(value: unknown): Highlight | undefined {
   return { title, description, media }
 }
 
+/**
+ * 解析发布版本
+ */
 function parseRelease(value: unknown): ParsedRelease | undefined {
   if (!isRecord(value)) return
   const tag = getText(value.tag) ?? getText(value.tag_name) ?? getText(value.name)
@@ -88,6 +112,9 @@ function parseRelease(value: unknown): ParsedRelease | undefined {
   return { tag, highlights }
 }
 
+/**
+ * 解析更新日志
+ */
 function parseChangelog(value: unknown): ParsedRelease[] | undefined {
   if (Array.isArray(value)) {
     return value.map(parseRelease).filter((release): release is ParsedRelease => release !== undefined)
@@ -99,6 +126,9 @@ function parseChangelog(value: unknown): ParsedRelease[] | undefined {
   return value.releases.map(parseRelease).filter((release): release is ParsedRelease => release !== undefined)
 }
 
+/**
+ * 提取版本区间内的高亮项
+ */
 function sliceHighlights(input: { releases: ParsedRelease[]; current?: string; previous?: string }) {
   const current = normalizeVersion(input.current)
   const previous = normalizeVersion(input.previous)
@@ -127,10 +157,16 @@ function sliceHighlights(input: { releases: ParsedRelease[]; current?: string; p
   return unique.slice(0, 5)
 }
 
+/**
+ * 生成高亮项的去重键
+ */
 function dedupeKey(highlight: Highlight) {
   return [highlight.title, highlight.description, highlight.media?.type ?? "", highlight.media?.src ?? ""].join("\n")
 }
 
+/**
+ * 加载发布高亮项
+ */
 function loadReleaseHighlights(value: unknown, current?: string, previous?: string) {
   const releases = parseChangelog(value)
   if (!releases?.length) return []

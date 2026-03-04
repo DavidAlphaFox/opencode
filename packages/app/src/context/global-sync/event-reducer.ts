@@ -14,6 +14,10 @@ import type {
 import type { State, VcsCache } from "./types"
 import { trimSessions } from "./session-trim"
 
+/**
+ * 处理全局事件
+ * 更新项目列表或刷新页面
+ */
 export function applyGlobalEvent(input: {
   event: { type: string; properties?: unknown }
   project: Project[]
@@ -39,6 +43,9 @@ export function applyGlobalEvent(input: {
   })
 }
 
+/**
+ * 清理会话相关的所有缓存数据
+ */
 function cleanupSessionCaches(
   store: Store<State>,
   setStore: SetStoreFunction<State>,
@@ -75,6 +82,10 @@ function cleanupSessionCaches(
   )
 }
 
+/**
+ * 处理目录级别的事件
+ * 更新会话、消息、权限、问题等状态
+ */
 export function applyDirectoryEvent(input: {
   event: { type: string; properties?: unknown }
   store: Store<State>

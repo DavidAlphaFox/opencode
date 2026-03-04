@@ -1,10 +1,22 @@
+/**
+ * 通知索引项
+ */
 type NotificationIndexItem = {
+  /** 项目目录路径 */
   directory?: string
+  /** 会话 ID */
   session?: string
+  /** 是否已查看 */
   viewed: boolean
+  /** 通知类型 */
   type: string
 }
 
+/**
+ * 构建通知索引
+ * 将通知列表按会话和项目进行分组统计
+ * @returns 包含已查看/未查看通知的映射表及统计信息
+ */
 export function buildNotificationIndex<T extends NotificationIndexItem>(list: T[]) {
   const sessionAll = new Map<string, T[]>()
   const sessionUnseen = new Map<string, T[]>()

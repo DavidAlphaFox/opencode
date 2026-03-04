@@ -6,6 +6,9 @@ import { useSDK } from "./sdk"
 import type { Platform } from "./platform"
 import { Persist, persisted, removePersisted } from "@/utils/persist"
 
+/**
+ * 本地终端
+ */
 export type LocalPTY = {
   id: string
   title: string
@@ -20,10 +23,16 @@ export type LocalPTY = {
 const WORKSPACE_KEY = "__workspace__"
 const MAX_TERMINAL_SESSIONS = 20
 
+/**
+ * 获取工作区终端缓存键
+ */
 export function getWorkspaceTerminalCacheKey(dir: string) {
   return `${dir}:${WORKSPACE_KEY}`
 }
 
+/**
+ * 获取旧的终端存储键
+ */
 export function getLegacyTerminalStorageKeys(dir: string, legacySessionID?: string) {
   if (!legacySessionID) return [`${dir}/terminal.v1`]
   return [`${dir}/terminal/${legacySessionID}.v1`, `${dir}/terminal.v1`]
@@ -38,6 +47,9 @@ type TerminalCacheEntry = {
 
 const caches = new Set<Map<string, TerminalCacheEntry>>()
 
+/**
+ * 清除工作区终端
+ */
 export function clearWorkspaceTerminals(dir: string, sessionIDs?: string[], platform?: Platform) {
   const key = getWorkspaceTerminalCacheKey(dir)
   for (const cache of caches) {
@@ -58,6 +70,9 @@ export function clearWorkspaceTerminals(dir: string, sessionIDs?: string[], plat
   }
 }
 
+/**
+ * 创建工作区终端会话
+ */
 function createWorkspaceTerminalSession(sdk: ReturnType<typeof useSDK>, dir: string, legacySessionID?: string) {
   const legacy = getLegacyTerminalStorageKeys(dir, legacySessionID)
 

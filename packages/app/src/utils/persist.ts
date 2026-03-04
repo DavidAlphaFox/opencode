@@ -14,12 +14,16 @@ type PersistTarget = {
   migrate?: (value: unknown) => unknown
 }
 
-const LEGACY_STORAGE = "default.dat"
-const GLOBAL_STORAGE = "opencode.global.dat"
-const LOCAL_PREFIX = "opencode."
-const fallback = new Map<string, boolean>()
+/** 本地存储持久化功能的配置和管理 */
 
+/** 全局存储键名 */
+const LEGACY_STORAGE = "default.dat"
+const GLOBAL_STORAGE =.dat"
+const LOCAL "opencode.global_PREFIX = "opencode."
+
+/** 缓存最大条目数 */
 const CACHE_MAX_ENTRIES = 500
+/** 缓存最大字节数 */
 const CACHE_MAX_BYTES = 8 * 1024 * 1024
 
 type CacheEntry = { value: string; bytes: number }
@@ -302,6 +306,13 @@ export const PersistTesting = {
   normalize,
 }
 
+/**
+ * 存储目标配置工厂
+ * - global: 全局存储，整个应用共享
+ * - workspace: 工作区存储，按项目目录隔离
+ * - session: 会话存储，按会话隔离
+ * - scoped: 自动选择工作区或会话存储
+ */
 export const Persist = {
   global(key: string, legacy?: string[]): PersistTarget {
     return { storage: GLOBAL_STORAGE, key, legacy }
@@ -318,6 +329,9 @@ export const Persist = {
   },
 }
 
+/**
+ * 移除持久化的数据
+ */
 export function removePersisted(target: { storage?: string; key: string }, platform?: Platform) {
   const isDesktop = platform?.platform === "desktop" && !!platform.storage
 
@@ -333,6 +347,13 @@ export function removePersisted(target: { storage?: string; key: string }, platf
   localStorageWithPrefix(target.storage).removeItem(target.key)
 }
 
+/**
+ * 创建持久化的响应式存储
+ * 支持桌面端和 Web 端，自动处理数据迁移和缓存
+ * @param target - 存储目标配置
+ * @param store - SolidJS store 元组 [状态, 设置函数]
+ * @returns [状态, 设置函数, 初始化值, 就绪状态访问器]
+ */
 export function persisted<T>(
   target: string | PersistTarget,
   store: [Store<T>, SetStoreFunction<T>],

@@ -1,5 +1,9 @@
 import type { DisposeCheck, EvictPlan } from "./types"
 
+/**
+ * 选择需要清理的目录
+ * 基于最后访问时间和空闲时间进行淘汰
+ */
 export function pickDirectoriesToEvict(input: EvictPlan) {
   const overflow = Math.max(0, input.stores.length - input.max)
   let pendingOverflow = overflow
@@ -18,6 +22,9 @@ export function pickDirectoriesToEvict(input: EvictPlan) {
   return output
 }
 
+/**
+ * 检查目录是否可以释放
+ */
 export function canDisposeDirectory(input: DisposeCheck) {
   if (!input.directory) return false
   if (!input.hasStore) return false

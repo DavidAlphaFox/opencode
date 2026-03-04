@@ -9,6 +9,9 @@ import { useParams } from "@solidjs/router"
 import { decode64 } from "@/utils/base64"
 import { acceptKey, autoRespondsPermission } from "./permission-auto-respond"
 
+/**
+ * 权限响应函数
+ */
 type PermissionRespondFn = (input: {
   sessionID: string
   permissionID: string
@@ -16,6 +19,9 @@ type PermissionRespondFn = (input: {
   directory?: string
 }) => void
 
+/**
+ * 检查是否为非允许规则
+ */
 function isNonAllowRule(rule: unknown) {
   if (!rule) return false
   if (typeof rule === "string") return rule !== "allow"
@@ -29,6 +35,9 @@ function isNonAllowRule(rule: unknown) {
   return false
 }
 
+/**
+ * 检查是否有权限提示规则
+ */
 function hasPermissionPromptRules(permission: unknown) {
   if (!permission) return false
   if (typeof permission === "string") return permission !== "allow"

@@ -1,6 +1,14 @@
 import { spawn } from "node:child_process"
 import { type Config } from "./gen/types.gen.js"
 
+/**
+ * 服务器启动选项
+ * - hostname: 服务器监听的主机名
+ * - port: 服务器监听的端口
+ * - signal: 用于取消服务器启动的 AbortSignal
+ * - timeout: 等待服务器启动的超时时间（毫秒）
+ * - config: Opencode 配置对象
+ */
 export type ServerOptions = {
   hostname?: string
   port?: number
@@ -9,6 +17,15 @@ export type ServerOptions = {
   config?: Config
 }
 
+/**
+ * TUI（终端用户界面）启动选项
+ * - project: 项目路径
+ * - model: 使用的模型
+ * - session: 会话 ID
+ * - agent: 使用的代理
+ * - signal: 用于取消启动的 AbortSignal
+ * - config: Opencode 配置对象
+ */
 export type TuiOptions = {
   project?: string
   model?: string
@@ -18,6 +35,12 @@ export type TuiOptions = {
   config?: Config
 }
 
+/**
+ * 启动本地 Opencode v2 服务器进程
+ * - 启动 opencode serve 命令
+ * - 等待服务器就绪并解析输出获取 URL
+ * - 返回服务器 URL 和关闭方法
+ */
 export async function createOpencodeServer(options?: ServerOptions) {
   options = Object.assign(
     {
@@ -90,6 +113,12 @@ export async function createOpencodeServer(options?: ServerOptions) {
   }
 }
 
+/**
+ * 启动 Opencode v2 终端界面（TUI）
+ * - 通过 opencode 命令行启动交互式界面
+ * - 支持指定项目、模型、会话和代理参数
+ * - 返回进程关闭方法
+ */
 export function createOpencodeTui(options?: TuiOptions) {
   const args = []
 

@@ -1,10 +1,19 @@
 import type { Prompt } from "@/context/prompt"
 import type { SelectedLineRange } from "@/context/file"
 
+/**
+ * 默认提示词
+ */
 const DEFAULT_PROMPT: Prompt = [{ type: "text", content: "", start: 0, end: 0 }]
 
+/**
+ * 最大历史记录数
+ */
 export const MAX_HISTORY = 100
 
+/**
+ * 提示词历史评论
+ */
 export type PromptHistoryComment = {
   id: string
   path: string
@@ -15,13 +24,26 @@ export type PromptHistoryComment = {
   preview?: string
 }
 
+/**
+ * 提示词历史条目
+ */
 export type PromptHistoryEntry = {
   prompt: Prompt
   comments: PromptHistoryComment[]
 }
 
+/**
+ * 存储的历史条目（可以是简单提示词或完整条目）
+ */
 export type PromptHistoryStoredEntry = Prompt | PromptHistoryEntry
 
+/**
+ * 判断是否可以在光标位置导航历史记录
+ * @param direction 方向（向上/向下）
+ * @param text 文本内容
+ * @param cursor 光标位置
+ * @param inHistory 是否在历史记录中
+ */
 export function canNavigateHistoryAtCursor(direction: "up" | "down", text: string, cursor: number, inHistory = false) {
   const position = Math.max(0, Math.min(cursor, text.length))
   const atStart = position === 0
@@ -31,6 +53,10 @@ export function canNavigateHistoryAtCursor(direction: "up" | "down", text: strin
   return position === text.length
 }
 
+/**
+ * 复制提示词部分
+ * @param prompt 提示词
+ */
 export function clonePromptParts(prompt: Prompt): Prompt {
   return prompt.map((part) => {
     if (part.type === "text") return { ...part }
@@ -43,6 +69,10 @@ export function clonePromptParts(prompt: Prompt): Prompt {
   })
 }
 
+/**
+ * 复制选区
+ * @param selection 选区
+ */
 function cloneSelection(selection: SelectedLineRange): SelectedLineRange {
   return {
     start: selection.start,
@@ -52,6 +82,10 @@ function cloneSelection(selection: SelectedLineRange): SelectedLineRange {
   }
 }
 
+/**
+ * 复制提示词历史评论
+ * @param comments 评论列表
+ */
 export function clonePromptHistoryComments(comments: PromptHistoryComment[]) {
   return comments.map((comment) => ({
     ...comment,
@@ -59,6 +93,10 @@ export function clonePromptHistoryComments(comments: PromptHistoryComment[]) {
   }))
 }
 
+/**
+ * 规范化提示词历史条目
+ * @param entry 存储的历史条目
+ */
 export function normalizePromptHistoryEntry(entry: PromptHistoryStoredEntry): PromptHistoryEntry {
   if (Array.isArray(entry)) {
     return {
@@ -72,10 +110,21 @@ export function normalizePromptHistoryEntry(entry: PromptHistoryStoredEntry): Pr
   }
 }
 
+/**
+ * 计算提示词长度
+ * @param prompt 提示词
+ */
 export function promptLength(prompt: Prompt) {
   return prompt.reduce((len, part) => len + ("content" in part ? part.content.length : 0), 0)
 }
 
+/**
+ * 预置历史条目
+ * @param entries 历史条目列表
+ * @param prompt 提示词
+ * @param comments 评论列表
+ * @param max 最大条目数
+ */
 export function prependHistoryEntry(
   entries: PromptHistoryStoredEntry[],
   prompt: Prompt,
@@ -99,6 +148,11 @@ export function prependHistoryEntry(
   return [entry, ...entries].slice(0, max)
 }
 
+/**
+ * 判断两个评论是否相等
+ * @param commentA 评论A
+ * @param commentB 评论B
+ */
 function isCommentEqual(commentA: PromptHistoryComment, commentB: PromptHistoryComment) {
   return (
     commentA.path === commentB.path &&
@@ -112,6 +166,11 @@ function isCommentEqual(commentA: PromptHistoryComment, commentB: PromptHistoryC
   )
 }
 
+/**
+ * 判断两个提示词是否相等
+ * @param promptA 提示词A
+ * @param promptB 提示词B
+ */
 function isPromptEqual(promptA: PromptHistoryStoredEntry, promptB: PromptHistoryStoredEntry) {
   const entryA = normalizePromptHistoryEntry(promptA)
   const entryB = normalizePromptHistoryEntry(promptB)
@@ -147,6 +206,9 @@ function isPromptEqual(promptA: PromptHistoryStoredEntry, promptB: PromptHistory
   return true
 }
 
+/**
+ * 历史导航输入参数
+ */
 type HistoryNavInput = {
   direction: "up" | "down"
   entries: PromptHistoryStoredEntry[]
@@ -156,6 +218,9 @@ type HistoryNavInput = {
   savedPrompt: PromptHistoryEntry | null
 }
 
+/**
+ * 历史导航结果
+ */
 type HistoryNavResult =
   | {
       handled: false
@@ -170,6 +235,10 @@ type HistoryNavResult =
       cursor: "start" | "end"
     }
 
+/**
+ * 导航提示词历史
+ * @param input 导航输入参数
+ */
 export function navigatePromptHistory(input: HistoryNavInput): HistoryNavResult {
   if (input.direction === "up") {
     if (input.entries.length === 0) {

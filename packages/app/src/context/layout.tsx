@@ -18,6 +18,9 @@ const DEFAULT_SESSION_WIDTH = 600
 const DEFAULT_TERMINAL_HEIGHT = 280
 export type AvatarColorKey = (typeof AVATAR_COLOR_KEYS)[number]
 
+/**
+ * 获取头像颜色
+ */
 export function getAvatarColors(key?: string) {
   if (key && AVATAR_COLOR_KEYS.includes(key as AvatarColorKey)) {
     return {
@@ -31,11 +34,17 @@ export function getAvatarColors(key?: string) {
   }
 }
 
+/**
+ * 会话标签页
+ */
 type SessionTabs = {
   active?: string
   all: string[]
 }
 
+/**
+ * 会话视图状态
+ */
 type SessionView = {
   scroll: Record<string, SessionScroll>
   reviewOpen?: string[]
@@ -43,22 +52,37 @@ type SessionView = {
   pendingMessageAt?: number
 }
 
+/**
+ * 标签页交接数据
+ */
 type TabHandoff = {
   dir: string
   id: string
   at: number
 }
 
+/**
+ * 本地项目
+ */
 export type LocalProject = Partial<Project> & { worktree: string; expanded: boolean }
 
+/**
+ * 审查差异样式
+ */
 export type ReviewDiffStyle = "unified" | "split"
 
+/**
+ * 确保会话键存在
+ */
 export function ensureSessionKey(key: string, touch: (key: string) => void, seed: (key: string) => void) {
   touch(key)
   seed(key)
   return key
 }
 
+/**
+ * 创建会话键读取器
+ */
 export function createSessionKeyReader(sessionKey: string | Accessor<string>, ensure: (key: string) => void) {
   const key = typeof sessionKey === "function" ? sessionKey : () => sessionKey
   return () => {
@@ -68,6 +92,9 @@ export function createSessionKeyReader(sessionKey: string | Accessor<string>, en
   }
 }
 
+/**
+ * 清理过期会话键
+ */
 export function pruneSessionKeys(input: {
   keep?: string
   max: number

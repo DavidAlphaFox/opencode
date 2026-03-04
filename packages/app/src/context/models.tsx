@@ -6,10 +6,24 @@ import { createSimpleContext } from "@opencode-ai/ui/context"
 import { useProviders } from "@/hooks/use-providers"
 import { Persist, persisted } from "@/utils/persist"
 
+/**
+ * 模型键
+ */
 export type ModelKey = { providerID: string; modelID: string }
 
+/**
+ * 可见性状态
+ */
 type Visibility = "show" | "hide"
+
+/**
+ * 用户模型配置
+ */
 type User = ModelKey & { visibility: Visibility; favorite?: boolean }
+
+/**
+ * 模型存储
+ */
 type Store = {
   user: User[]
   recent: ModelKey[]
@@ -18,6 +32,9 @@ type Store = {
 
 const RECENT_LIMIT = 5
 
+/**
+ * 生成模型键字符串
+ */
 function modelKey(model: ModelKey) {
   return `${model.providerID}:${model.modelID}`
 }

@@ -5,11 +5,30 @@ import { useLanguage } from "@/context/language"
 import { uuid } from "@/utils/uuid"
 import { getCursorPosition } from "./editor-dom"
 
+/**
+ * 接受的文件类型 - 图片
+ */
 export const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"]
+
+/**
+ * 接受的文件类型 - 所有
+ */
 export const ACCEPTED_FILE_TYPES = [...ACCEPTED_IMAGE_TYPES, "application/pdf"]
+
+/**
+ * 大文本粘贴的字符阈值
+ */
 const LARGE_PASTE_CHARS = 8000
+
+/**
+ * 大文本粘贴的换行阈值
+ */
 const LARGE_PASTE_BREAKS = 120
 
+/**
+ * 判断是否为大量文本粘贴
+ * @param text 文本内容
+ */
 function largePaste(text: string) {
   if (text.length >= LARGE_PASTE_CHARS) return true
   let breaks = 0
@@ -21,6 +40,9 @@ function largePaste(text: string) {
   return false
 }
 
+/**
+ * 提示词附件输入参数
+ */
 type PromptAttachmentsInput = {
   editor: () => HTMLDivElement | undefined
   isFocused: () => boolean
@@ -31,6 +53,10 @@ type PromptAttachmentsInput = {
   readClipboardImage?: () => Promise<File | null>
 }
 
+/**
+ * 创建提示词附件处理函数
+ * @param input 附件输入参数
+ */
 export function createPromptAttachments(input: PromptAttachmentsInput) {
   const prompt = usePrompt()
   const language = useLanguage()

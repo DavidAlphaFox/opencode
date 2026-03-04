@@ -23,6 +23,11 @@ type Inline =
       name: string
     }
 
+/**
+ * 从文件 URL 中提取选区信息
+ * @param url 文件 URL，包含查询参数 start 和 end
+ * @returns 选区信息或 undefined
+ */
 function selectionFromFileUrl(url: string): Extract<Inline, { type: "file" }>["selection"] {
   const queryIndex = url.indexOf("?")
   if (queryIndex === -1) return undefined
@@ -38,6 +43,11 @@ function selectionFromFileUrl(url: string): Extract<Inline, { type: "file" }>["s
   }
 }
 
+/**
+ * 从消息部件中获取文本内容
+ * @param parts 消息部件数组
+ * @returns 最长的非合成、非忽略的文本部件
+ */
 function textPartValue(parts: Part[]) {
   const candidates = parts
     .filter((part): part is TextPart => part.type === "text")

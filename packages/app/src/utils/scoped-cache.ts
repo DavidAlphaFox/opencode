@@ -1,3 +1,7 @@
+/**
+ * 作用域缓存选项
+ * @typeParam T 缓存值的类型
+ */
 type ScopedCacheOptions<T> = {
   maxEntries?: number
   ttlMs?: number
@@ -5,11 +9,22 @@ type ScopedCacheOptions<T> = {
   now?: () => number
 }
 
+/**
+ * 缓存条目
+ * @typeParam T 值的类型
+ */
 type Entry<T> = {
   value: T
   touchedAt: number
 }
 
+/**
+ * 创建作用域缓存
+ * @typeParam T 缓存值的类型
+ * @param createValue 根据键创建值的函数
+ * @param options 缓存选项
+ * @returns 缓存接口
+ */
 export function createScopedCache<T>(createValue: (key: string) => T, options: ScopedCacheOptions<T> = {}) {
   const store = new Map<string, Entry<T>>()
   const now = options.now ?? Date.now

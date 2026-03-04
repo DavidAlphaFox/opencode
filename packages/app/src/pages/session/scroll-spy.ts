@@ -1,14 +1,23 @@
+/**
+ * 可见元素信息
+ */
 type Visible = {
   id: string
   ratio: number
   top: number
 }
 
+/**
+ * 元素偏移量信息
+ */
 type Offset = {
   id: string
   top: number
 }
 
+/**
+ * 滚动监听器配置输入参数
+ */
 type Input = {
   onActive: (id: string) => void
   raf?: (cb: FrameRequestCallback) => number
@@ -18,6 +27,12 @@ type Input = {
   MutationObserver?: typeof globalThis.MutationObserver
 }
 
+/**
+ * 根据目标行号从可见元素列表中选取最匹配的元素的 ID
+ * @param list - 可见元素列表
+ * @param line - 目标行号
+ * @returns 最匹配的元素 ID，未找到则返回 undefined
+ */
 export const pickVisibleId = (list: Visible[], line: number) => {
   if (list.length === 0) return
 
@@ -34,6 +49,12 @@ export const pickVisibleId = (list: Visible[], line: number) => {
   return sorted[0]?.id
 }
 
+/**
+ * 根据截断值从偏移量列表中选取最接近的元素 ID
+ * @param list - 偏移量列表
+ * @param cutoff - 截断值
+ * @returns 最接近的元素 ID，未找到则返回 undefined
+ */
 export const pickOffsetId = (list: Offset[], cutoff: number) => {
   if (list.length === 0) return
 
@@ -58,6 +79,11 @@ export const pickOffsetId = (list: Offset[], cutoff: number) => {
   return list[out]?.id
 }
 
+/**
+ * 创建滚动监听器，用于追踪可见元素并触发激活回调
+ * @param input - 配置参数
+ * @returns 滚动监听器控制接口
+ */
 export const createScrollSpy = (input: Input) => {
   const raf = input.raf ?? requestAnimationFrame
   const caf = input.caf ?? cancelAnimationFrame

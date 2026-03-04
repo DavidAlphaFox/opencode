@@ -1,8 +1,14 @@
+/**
+ * 移除文件协议前缀
+ */
 export function stripFileProtocol(input: string) {
   if (!input.startsWith("file://")) return input
   return input.slice("file://".length)
 }
 
+/**
+ * 移除URL中的查询参数和哈希部分
+ */
 export function stripQueryAndHash(input: string) {
   const hashIndex = input.indexOf("#")
   const queryIndex = input.indexOf("?")
@@ -16,6 +22,9 @@ export function stripQueryAndHash(input: string) {
   return input
 }
 
+/**
+ * 解码Git路径中的转义字符（处理引号包裹的路径）
+ */
 export function unquoteGitPath(input: string) {
   if (!input.startsWith('"')) return input
   if (!input.endsWith('"')) return input
@@ -72,6 +81,9 @@ export function unquoteGitPath(input: string) {
   return new TextDecoder().decode(new Uint8Array(bytes))
 }
 
+/**
+ * 解码文件路径（处理URL编码）
+ */
 export function decodeFilePath(input: string) {
   try {
     return decodeURIComponent(input)
@@ -80,6 +92,9 @@ export function decodeFilePath(input: string) {
   }
 }
 
+/**
+ * 编码文件路径（处理Windows路径和URL编码）
+ */
 export function encodeFilePath(filepath: string): string {
   // Normalize Windows paths: convert backslashes to forward slashes
   let normalized = filepath.replace(/\\/g, "/")
@@ -101,6 +116,9 @@ export function encodeFilePath(filepath: string): string {
     .join("/")
 }
 
+/**
+ * 创建路径辅助函数集（规范化、Tab转换等）
+ */
 export function createPathHelpers(scope: () => string) {
   const normalize = (input: string) => {
     const root = scope()

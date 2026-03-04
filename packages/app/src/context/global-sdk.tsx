@@ -11,6 +11,10 @@ const abortError = z.object({
   name: z.literal("AbortError"),
 })
 
+/**
+ * 全局SDK上下文
+ * 提供全局事件流和SDK客户端
+ */
 export const { use: useGlobalSDK, provider: GlobalSDKProvider } = createSimpleContext({
   name: "GlobalSDK",
   init: () => {

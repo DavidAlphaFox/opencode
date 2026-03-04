@@ -1,5 +1,9 @@
 import { DateTime } from "luxon"
 
+/**
+ * 创建会话上下文格式化器
+ * @param locale 语言环境
+ */
 export function createSessionContextFormatter(locale: string) {
   return {
     number(value: number | null | undefined) {

@@ -5,6 +5,11 @@ import { type Config } from "./gen/client/types.gen.js"
 import { OpencodeClient } from "./gen/sdk.gen.js"
 export { type Config as OpencodeClientConfig, OpencodeClient }
 
+/**
+ * 创建 Opencode 客户端实例
+ * - 配置自定义 fetch（禁用超时）
+ * - 如果指定了 directory，将其编码后添加到请求头中
+ */
 export function createOpencodeClient(config?: Config & { directory?: string }) {
   if (!config?.fetch) {
     const customFetch: any = (req: any) => {

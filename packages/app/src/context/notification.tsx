@@ -14,6 +14,9 @@ import { EventSessionError } from "@opencode-ai/sdk/v2"
 import { Persist, persisted } from "@/utils/persist"
 import { playSound, soundSrc } from "@/utils/sound"
 
+/**
+ * 通知基类
+ */
 type NotificationBase = {
   directory?: string
   session?: string
@@ -22,17 +25,29 @@ type NotificationBase = {
   viewed: boolean
 }
 
+/**
+ * 回合完成通知
+ */
 type TurnCompleteNotification = NotificationBase & {
   type: "turn-complete"
 }
 
+/**
+ * 错误通知
+ */
 type ErrorNotification = NotificationBase & {
   type: "error"
   error: EventSessionError["properties"]["error"]
 }
 
+/**
+ * 通知
+ */
 export type Notification = TurnCompleteNotification | ErrorNotification
 
+/**
+ * 通知索引
+ */
 type NotificationIndex = {
   session: {
     all: Record<string, Notification[]>
@@ -51,6 +66,9 @@ type NotificationIndex = {
 const MAX_NOTIFICATIONS = 500
 const NOTIFICATION_TTL_MS = 1000 * 60 * 60 * 24 * 30
 
+/**
+ * 清理过期通知
+ */
 function pruneNotifications(list: Notification[]) {
   const cutoff = Date.now() - NOTIFICATION_TTL_MS
   const pruned = list.filter((n) => n.time >= cutoff)
@@ -58,6 +76,9 @@ function pruneNotifications(list: Notification[]) {
   return pruned.slice(pruned.length - MAX_NOTIFICATIONS)
 }
 
+/**
+ * 创建通知索引
+ */
 function createNotificationIndex(): NotificationIndex {
   return {
     session: {
@@ -75,6 +96,9 @@ function createNotificationIndex(): NotificationIndex {
   }
 }
 
+/**
+ * 构建通知索引
+ */
 function buildNotificationIndex(list: Notification[]) {
   const index = createNotificationIndex()
 

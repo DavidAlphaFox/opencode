@@ -6,8 +6,14 @@ import type { AgentPart, FileAttachmentPart, ImageAttachmentPart, Prompt } from 
 import { Identifier } from "@/utils/id"
 import { createCommentMetadata, formatCommentNote } from "@/utils/comment-note"
 
+/**
+ * 提示词请求部分
+ */
 type PromptRequestPart = (TextPartInput | FilePartInput | AgentPartInput) & { id: string }
 
+/**
+ * 上下文文件
+ */
 type ContextFile = {
   key: string
   type: "file"
@@ -19,6 +25,9 @@ type ContextFile = {
   preview?: string
 }
 
+/**
+ * 构建请求部分输入参数
+ */
 type BuildRequestPartsInput = {
   prompt: Prompt
   context: ContextFile[]
@@ -29,6 +38,11 @@ type BuildRequestPartsInput = {
   sessionDirectory: string
 }
 
+/**
+ * 转换为绝对路径
+ * @param directory 目录
+ * @param path 路径
+ */
 const absolute = (directory: string, path: string) => {
   if (path.startsWith("/")) return path
   if (/^[A-Za-z]:[\\/]/.test(path) || /^[A-Za-z]:$/.test(path)) return path
@@ -36,12 +50,29 @@ const absolute = (directory: string, path: string) => {
   return `${directory.replace(/[\\/]+$/, "")}/${path}`
 }
 
+/**
+ * 生成文件查询字符串
+ * @param selection 选区
+ */
 const fileQuery = (selection: FileSelection | undefined) =>
   selection ? `?start=${selection.startLine}&end=${selection.endLine}` : ""
 
+/**
+ * 判断是否为文件附件
+ */
 const isFileAttachment = (part: Prompt[number]): part is FileAttachmentPart => part.type === "file"
+
+/**
+ * 判断是否为智能体附件
+ */
 const isAgentAttachment = (part: Prompt[number]): part is AgentPart => part.type === "agent"
 
+/**
+ * 转换为乐观更新的部分
+ * @param part 请求部分
+ * @param sessionID 会话ID
+ * @param messageID 消息ID
+ */
 const toOptimisticPart = (part: PromptRequestPart, sessionID: string, messageID: string): Part => {
   if (part.type === "text") {
     return {
@@ -78,6 +109,10 @@ const toOptimisticPart = (part: PromptRequestPart, sessionID: string, messageID:
   }
 }
 
+/**
+ * 构建请求部分
+ * @param input 构建输入参数
+ */
 export function buildRequestParts(input: BuildRequestPartsInput) {
   const requestParts: PromptRequestPart[] = [
     {

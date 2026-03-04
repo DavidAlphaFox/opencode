@@ -4,6 +4,10 @@ type QueueInput = {
   bootstrapInstance: (directory: string) => Promise<void> | void
 }
 
+/**
+ * 创建刷新队列
+ * 管理目录刷新的调度和执行
+ */
 export function createRefreshQueue(input: QueueInput) {
   const queued = new Set<string>()
   let root = false

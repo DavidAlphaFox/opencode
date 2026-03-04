@@ -1,5 +1,10 @@
 import { batch } from "solid-js"
 
+/**
+ * 根据终端 ID 聚焦到对应的终端输入框
+ * @param id - 终端的唯一标识符
+ * @returns 是否成功聚焦
+ */
 export const focusTerminalById = (id: string) => {
   const wrapper = document.getElementById(`terminal-wrapper-${id}`)
   const terminal = wrapper?.querySelector('[data-component="terminal"]')
@@ -20,6 +25,11 @@ export const focusTerminalById = (id: string) => {
   return true
 }
 
+/**
+ * 创建打开审查文件的函数
+ * @param input - 包含文件操作相关方法的配置对象
+ * @returns 执行打开文件操作的函数
+ */
 export const createOpenReviewFile = (input: {
   showAllFiles: () => void
   tabForPath: (path: string) => string
@@ -37,6 +47,11 @@ export const createOpenReviewFile = (input: {
   }
 }
 
+/**
+ * 创建打开会话文件标签页的函数
+ * @param input - 包含标签页操作相关方法的配置对象
+ * @returns 执行打开标签页操作的函数
+ */
 export const createOpenSessionFileTab = (input: {
   normalizeTab: (tab: string) => string
   openTab: (tab: string) => void
@@ -58,6 +73,13 @@ export const createOpenSessionFileTab = (input: {
   }
 }
 
+/**
+ * 计算标签页重新排序的目标索引
+ * @param tabs - 当前标签页列表
+ * @param from - 源标签页标识
+ * @param to - 目标标签页标识
+ * @returns 目标索引，未找到或无效则返回 undefined
+ */
 export const getTabReorderIndex = (tabs: readonly string[], from: string, to: string) => {
   const fromIndex = tabs.indexOf(from)
   const toIndex = tabs.indexOf(to)

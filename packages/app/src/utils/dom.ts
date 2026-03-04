@@ -1,3 +1,6 @@
+/**
+ * 获取文本选区在行内的字符偏移量
+ */
 export function getCharacterOffsetInLine(lineElement: Element, targetNode: Node, offset: number): number {
   const r = document.createRange()
   r.selectNodeContents(lineElement)
@@ -5,6 +8,9 @@ export function getCharacterOffsetInLine(lineElement: Element, targetNode: Node,
   return r.toString().length
 }
 
+/**
+ * 根据字符索引获取对应的节点和偏移量
+ */
 export function getNodeOffsetInLine(lineElement: Element, charIndex: number): { node: Node; offset: number } | null {
   const walker = document.createTreeWalker(lineElement, NodeFilter.SHOW_TEXT, null)
   let remaining = Math.max(0, charIndex)
@@ -23,6 +29,10 @@ export function getNodeOffsetInLine(lineElement: Element, charIndex: number): { 
   return null
 }
 
+/**
+ * 获取容器内文本选区的位置信息
+ * 返回起始行、起始列、结束行、结束列
+ */
 export function getSelectionInContainer(
   container: HTMLElement,
 ): { sl: number; sch: number; el: number; ech: number } | null {

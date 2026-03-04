@@ -1,3 +1,6 @@
+/**
+ * 提示词占位符输入参数
+ */
 type PromptPlaceholderInput = {
   mode: "normal" | "shell"
   commentCount: number
@@ -6,6 +9,10 @@ type PromptPlaceholderInput = {
   t: (key: string, params?: Record<string, string>) => string
 }
 
+/**
+ * 获取提示词占位符文本
+ * @param input 占位符输入参数
+ */
 export function promptPlaceholder(input: PromptPlaceholderInput) {
   if (input.mode === "shell") return input.t("prompt.placeholder.shell")
   if (input.commentCount > 1) return input.t("prompt.placeholder.summarizeComments")

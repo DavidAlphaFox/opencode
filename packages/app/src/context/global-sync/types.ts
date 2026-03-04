@@ -20,6 +20,9 @@ import type {
 import type { Accessor } from "solid-js"
 import type { SetStoreFunction, Store } from "solid-js/store"
 
+/**
+ * 项目元数据
+ */
 export type ProjectMeta = {
   name?: string
   icon?: {
@@ -31,6 +34,9 @@ export type ProjectMeta = {
   }
 }
 
+/**
+ * 目录级别的应用状态
+ */
 export type State = {
   status: "loading" | "partial" | "complete"
   agent: Agent[]
@@ -72,32 +78,50 @@ export type State = {
   }
 }
 
+/**
+ * VCS缓存
+ */
 export type VcsCache = {
   store: Store<{ value: VcsInfo | undefined }>
   setStore: SetStoreFunction<{ value: VcsInfo | undefined }>
   ready: Accessor<boolean>
 }
 
+/**
+ * 项目元数据缓存
+ */
 export type MetaCache = {
   store: Store<{ value: ProjectMeta | undefined }>
   setStore: SetStoreFunction<{ value: ProjectMeta | undefined }>
   ready: Accessor<boolean>
 }
 
+/**
+ * 项目图标缓存
+ */
 export type IconCache = {
   store: Store<{ value: string | undefined }>
   setStore: SetStoreFunction<{ value: string | undefined }>
   ready: Accessor<boolean>
 }
 
+/**
+ * 子存储选项
+ */
 export type ChildOptions = {
   bootstrap?: boolean
 }
 
+/**
+ * 目录状态
+ */
 export type DirState = {
   lastAccessAt: number
 }
 
+/**
+ * 淘汰计划参数
+ */
 export type EvictPlan = {
   stores: string[]
   state: Map<string, DirState>
@@ -107,6 +131,9 @@ export type EvictPlan = {
   now: number
 }
 
+/**
+ * 释放检查参数
+ */
 export type DisposeCheck = {
   directory: string
   hasStore: boolean
@@ -115,19 +142,40 @@ export type DisposeCheck = {
   loadingSessions: boolean
 }
 
+/**
+ * 根会话加载参数
+ */
 export type RootLoadArgs = {
   directory: string
   limit: number
   list: (query: { directory: string; roots: true; limit?: number }) => Promise<{ data?: Session[] }>
 }
 
+/**
+ * 根会话加载结果
+ */
 export type RootLoadResult = {
   data?: Session[]
   limit: number
   limited: boolean
 }
 
+/**
+ * 最大目录存储数量
+ */
 export const MAX_DIR_STORES = 30
+
+/**
+ * 目录空闲超时（毫秒）
+ */
 export const DIR_IDLE_TTL_MS = 20 * 60 * 1000
+
+/**
+ * 会话最近窗口（毫秒）
+ */
 export const SESSION_RECENT_WINDOW = 4 * 60 * 60 * 1000
+
+/**
+ * 最近会话限制数量
+ */
 export const SESSION_RECENT_LIMIT = 50

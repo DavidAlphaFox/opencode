@@ -1,5 +1,9 @@
 type Point = { x: number; y: number }
 
+/**
+ * 创建鼠标悬停激活功能的工厂函数
+ * 用于实现类似"瞄准"的用户交互效果 - 当鼠标从右向左移动并悬停在元素上时触发激活
+ */
 export function createAim(props: {
   enabled: () => boolean
   active: () => string | undefined

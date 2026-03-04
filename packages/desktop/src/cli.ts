@@ -3,6 +3,9 @@ import { message } from "@tauri-apps/plugin-dialog"
 import { initI18n, t } from "./i18n"
 import { commands } from "./bindings"
 
+/**
+ * 将 CLI 安装错误转换为用户友好的本地化错误消息
+ */
 function installError(error: unknown) {
   const text = String(error)
   if (text.includes("CLI installation is only supported on macOS & Linux")) {
@@ -29,6 +32,10 @@ function installError(error: unknown) {
   return text || t("desktop.cli.error.unknown")
 }
 
+/**
+ * 执行 CLI 安装流程
+ * 调用后端命令安装 CLI，并显示安装结果或错误提示
+ */
 export async function installCli(): Promise<void> {
   await initI18n()
 

@@ -1,3 +1,9 @@
+/**
+ * 创建终端写入器
+ * @param write 写入函数
+ * @param schedule 调度函数
+ * @returns 写入器和刷新接口
+ */
 export function terminalWriter(
   write: (data: string, done?: VoidFunction) => void,
   schedule: (flush: VoidFunction) => void = queueMicrotask,

@@ -17,13 +17,22 @@ import { Worktree as WorktreeState } from "@/utils/worktree"
 import { buildRequestParts } from "./build-request-parts"
 import { setCursorPosition } from "./editor-dom"
 
+/**
+ * 待提交的提示词状态
+ */
 type PendingPrompt = {
   abort: AbortController
   cleanup: VoidFunction
 }
 
+/**
+ * 待提交的提示词映射
+ */
 const pending = new Map<string, PendingPrompt>()
 
+/**
+ * 提示词提交输入参数
+ */
 type PromptSubmitInput = {
   info: Accessor<{ id: string } | undefined>
   imageAttachments: Accessor<ImageAttachmentPart[]>
@@ -43,6 +52,9 @@ type PromptSubmitInput = {
   onSubmit?: () => void
 }
 
+/**
+ * 评论项目
+ */
 type CommentItem = {
   path: string
   selection?: FileSelection
@@ -52,6 +64,10 @@ type CommentItem = {
   preview?: string
 }
 
+/**
+ * 创建提示词提交处理函数
+ * @param input 提交输入参数
+ */
 export function createPromptSubmit(input: PromptSubmitInput) {
   const navigate = useNavigate()
   const sdk = useSDK()
@@ -64,6 +80,10 @@ export function createPromptSubmit(input: PromptSubmitInput) {
   const language = useLanguage()
   const params = useParams()
 
+  /**
+   * 获取错误消息
+   * @param err 错误对象
+   */
   const errorMessage = (err: unknown) => {
     if (err && typeof err === "object" && "data" in err) {
       const data = (err as { data?: { message?: string } }).data
@@ -73,6 +93,9 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     return language.t("common.requestFailed")
   }
 
+  /**
+   * 中止当前请求
+   */
   const abort = async () => {
     const sessionID = params.id
     if (!sessionID) return Promise.resolve()
@@ -95,6 +118,10 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       .catch(() => {})
   }
 
+  /**
+   * 恢复评论项目到上下文
+   * @param items 评论项目列表
+   */
   const restoreCommentItems = (items: CommentItem[]) => {
     for (const item of items) {
       prompt.context.add({
@@ -109,12 +136,20 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     }
   }
 
+  /**
+   * 移除评论项目
+   * @param items 项目列表
+   */
   const removeCommentItems = (items: { key: string }[]) => {
     for (const item of items) {
       prompt.context.remove(item.key)
     }
   }
 
+  /**
+   * 处理表单提交
+   * @param event 事件对象
+   */
   const handleSubmit = async (event: Event) => {
     event.preventDefault()
 

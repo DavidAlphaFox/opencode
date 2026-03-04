@@ -1,5 +1,12 @@
+/**
+ * 最大换行符数量（用于优化性能）
+ */
 const MAX_BREAKS = 200
 
+/**
+ * 创建文本片段
+ * @param content 文本内容
+ */
 export function createTextFragment(content: string): DocumentFragment {
   const fragment = document.createDocumentFragment()
   let breaks = 0
@@ -27,11 +34,19 @@ export function createTextFragment(content: string): DocumentFragment {
   return fragment
 }
 
+/**
+ * 获取节点长度
+ * @param node DOM 节点
+ */
 export function getNodeLength(node: Node): number {
   if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "BR") return 1
   return (node.textContent ?? "").replace(/\u200B/g, "").length
 }
 
+/**
+ * 获取文本长度
+ * @param node DOM 节点
+ */
 export function getTextLength(node: Node): number {
   if (node.nodeType === Node.TEXT_NODE) return (node.textContent ?? "").replace(/\u200B/g, "").length
   if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "BR") return 1
@@ -42,6 +57,10 @@ export function getTextLength(node: Node): number {
   return length
 }
 
+/**
+ * 获取光标位置
+ * @param parent 父元素
+ */
 export function getCursorPosition(parent: HTMLElement): number {
   const selection = window.getSelection()
   if (!selection || selection.rangeCount === 0) return 0
@@ -53,6 +72,11 @@ export function getCursorPosition(parent: HTMLElement): number {
   return getTextLength(preCaretRange.cloneContents())
 }
 
+/**
+ * 设置光标位置
+ * @param parent 父元素
+ * @param position 位置
+ */
 export function setCursorPosition(parent: HTMLElement, position: number) {
   let remaining = position
   let node = parent.firstChild
@@ -117,6 +141,13 @@ export function setCursorPosition(parent: HTMLElement, position: number) {
   fallbackSelection?.addRange(fallbackRange)
 }
 
+/**
+ * 设置选区边界
+ * @param parent 父元素
+ * @param range 选区
+ * @param edge 边界（开始/结束）
+ * @param offset 偏移量
+ */
 export function setRangeEdge(parent: HTMLElement, range: Range, edge: "start" | "end", offset: number) {
   let remaining = offset
   const nodes = Array.from(parent.childNodes)

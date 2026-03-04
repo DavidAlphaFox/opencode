@@ -6,8 +6,16 @@ import { type as ostype } from "@tauri-apps/plugin-os"
 import { initI18n, t } from "./i18n"
 import { commands } from "./bindings"
 
+/** 标识更新功能是否启用（从全局配置读取） */
 export const UPDATER_ENABLED = window.__OPENCODE__?.updaterEnabled ?? false
 
+/**
+ * 执行完整的更新检查和安装流程
+ * - 检查更新
+ * - 下载更新
+ * - 提示用户确认
+ * - 安装更新并重启应用
+ */
 export async function runUpdater({ alertOnFail }: { alertOnFail: boolean }) {
   await initI18n()
 

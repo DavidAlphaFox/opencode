@@ -5,10 +5,20 @@ import { usePlatform } from "@/context/platform"
 import { Persist, persisted } from "@/utils/persist"
 import { checkServerHealth } from "@/utils/server-health"
 
+/**
+ * 存储的项目
+ */
 type StoredProject = { worktree: string; expanded: boolean }
+
+/**
+ * 存储的服务器连接
+ */
 type StoredServer = string | ServerConnection.HttpBase | ServerConnection.Http
 const HEALTH_POLL_INTERVAL_MS = 10_000
 
+/**
+ * 规范化服务器URL
+ */
 export function normalizeServerUrl(input: string) {
   const trimmed = input.trim()
   if (!trimmed) return
@@ -16,12 +26,18 @@ export function normalizeServerUrl(input: string) {
   return withProtocol.replace(/\/+$/, "")
 }
 
+/**
+ * 获取服务器显示名称
+ */
 export function serverName(conn?: ServerConnection.Any, ignoreDisplayName = false) {
   if (!conn) return ""
   if (conn.displayName && !ignoreDisplayName) return conn.displayName
   return conn.http.url.replace(/^https?:\/\//, "").replace(/\/+$/, "")
 }
 
+/**
+ * 获取项目键
+ */
 function projectsKey(key: ServerConnection.Key) {
   if (!key) return ""
   if (key === "sidecar") return "local"
@@ -29,6 +45,9 @@ function projectsKey(key: ServerConnection.Key) {
   return key
 }
 
+/**
+ * 检查是否为本地主机
+ */
 function isLocalHost(url: string) {
   const host = url.replace(/^https?:\/\//, "").split(":")[0]
   if (host === "localhost" || host === "127.0.0.1") return "local"

@@ -1,3 +1,8 @@
+/**
+ * 生成终端标签页的显示标题
+ * @param input - 包含标题和翻译函数的配置对象
+ * @returns 格式化后的终端标题
+ */
 export const terminalTabLabel = (input: {
   title?: string
   titleNumber?: number

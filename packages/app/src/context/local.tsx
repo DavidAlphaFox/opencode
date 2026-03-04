@@ -8,6 +8,9 @@ import { useProviders } from "@/hooks/use-providers"
 import { useModels } from "@/context/models"
 import { cycleModelVariant, getConfiguredAgentVariant, resolveModelVariant } from "./model-variant"
 
+/**
+ * 模型键（提供商ID和模型ID的组合）
+ */
 export type ModelKey = { providerID: string; modelID: string }
 
 export const { use: useLocal, provider: LocalProvider } = createSimpleContext({

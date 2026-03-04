@@ -36,6 +36,9 @@ import { SESSION_RECENT_LIMIT } from "./global-sync/types"
 import { sanitizeProject } from "./global-sync/utils"
 import { formatServerError } from "@/utils/server-errors"
 
+/**
+ * 全局存储
+ */
 type GlobalStore = {
   ready: boolean
   error?: InitError
@@ -50,6 +53,9 @@ type GlobalStore = {
   reload: undefined | "pending" | "complete"
 }
 
+/**
+ * 创建全局同步
+ */
 function createGlobalSync() {
   const globalSDK = useGlobalSDK()
   const language = useLanguage()

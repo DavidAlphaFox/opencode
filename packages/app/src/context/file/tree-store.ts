@@ -1,6 +1,9 @@
 import { createStore, produce, reconcile } from "solid-js/store"
 import type { FileNode } from "@opencode-ai/sdk/v2"
 
+/**
+ * 目录状态
+ */
 type DirectoryState = {
   expanded: boolean
   loaded?: boolean
@@ -9,6 +12,9 @@ type DirectoryState = {
   children?: string[]
 }
 
+/**
+ * 文件树存储选项
+ */
 type TreeStoreOptions = {
   scope: () => string
   normalizeDir: (input: string) => string
@@ -16,6 +22,10 @@ type TreeStoreOptions = {
   onError: (message: string) => void
 }
 
+/**
+ * 创建文件树存储管理器
+ * 管理目录展开状态和文件列表
+ */
 export function createFileTreeStore(options: TreeStoreOptions) {
   const [tree, setTree] = createStore<{
     node: Record<string, FileNode>

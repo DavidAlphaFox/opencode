@@ -1,8 +1,14 @@
 import type { ServerConnection } from "@/context/server"
 import { createSdkForServer } from "./server"
 
+/**
+ * 服务器健康状态
+ */
 export type ServerHealth = { healthy: boolean; version?: string }
 
+/**
+ * 检查服务器健康状态选项
+ */
 interface CheckServerHealthOptions {
   timeoutMs?: number
   signal?: AbortSignal
@@ -14,6 +20,11 @@ const defaultTimeoutMs = 3000
 const defaultRetryCount = 2
 const defaultRetryDelayMs = 100
 
+/**
+ * 创建超时 AbortSignal
+ * @param timeoutMs 超时毫秒数
+ * @returns 包含 signal 和 clear 函数的对象
+ */
 function timeoutSignal(timeoutMs: number) {
   const timeout = (AbortSignal as unknown as { timeout?: (ms: number) => AbortSignal }).timeout
   if (timeout) {
@@ -29,6 +40,12 @@ function timeoutSignal(timeoutMs: number) {
   return { signal: controller.signal, clear: () => clearTimeout(timer) }
 }
 
+/**
+ * 等待指定毫秒数
+ * @param ms 毫秒数
+ * @param signal 中止信号
+ * @returns Promise
+ */
 function wait(ms: number, signal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
     if (signal?.aborted) {
@@ -47,6 +64,12 @@ function wait(ms: number, signal?: AbortSignal) {
   })
 }
 
+/**
+ * 检查错误是否可重试
+ * @param error 错误对象
+ * @param signal 中止信号
+ * @returns 是否可重试
+ */
 function retryable(error: unknown, signal?: AbortSignal) {
   if (signal?.aborted) return false
   if (!(error instanceof Error)) return false
@@ -55,6 +78,13 @@ function retryable(error: unknown, signal?: AbortSignal) {
   return /network|fetch|econnreset|econnrefused|enotfound|timedout/i.test(error.message)
 }
 
+/**
+ * 检查服务器健康状态
+ * @param server 服务器连接
+ * @param fetch fetch 函数
+ * @param opts 检查选项
+ * @returns 服务器健康状态
+ */
 export async function checkServerHealth(
   server: ServerConnection.HttpBase,
   fetch: typeof globalThis.fetch,

@@ -3,12 +3,18 @@ import { createEffect, createMemo } from "solid-js"
 import { createSimpleContext } from "@opencode-ai/ui/context"
 import { persisted } from "@/utils/persist"
 
+/**
+ * 通知设置
+ */
 export interface NotificationSettings {
   agent: boolean
   permissions: boolean
   errors: boolean
 }
 
+/**
+ * 声音设置
+ */
 export interface SoundSettings {
   agentEnabled: boolean
   agent: string
@@ -18,6 +24,9 @@ export interface SoundSettings {
   errors: string
 }
 
+/**
+ * 应用设置
+ */
 export interface Settings {
   general: {
     autoSave: boolean
@@ -94,10 +103,16 @@ const monoFonts: Record<string, string> = {
   "geist-mono": `"GeistMono Nerd Font", "GeistMono Nerd Font Mono", "IBM Plex Mono", "IBM Plex Mono Fallback", ${monoFallback}`,
 }
 
+/**
+ * 获取等宽字体族
+ */
 export function monoFontFamily(font: string | undefined) {
   return monoFonts[font ?? defaultSettings.appearance.font] ?? monoFonts[defaultSettings.appearance.font]
 }
 
+/**
+ * 带回退值的读取函数
+ */
 function withFallback<T>(read: () => T | undefined, fallback: T) {
   return createMemo(() => read() ?? fallback)
 }

@@ -7,10 +7,16 @@ import { useGlobalSync } from "./global-sync"
 import { useSDK } from "./sdk"
 import type { Message, Part } from "@opencode-ai/sdk/v2/client"
 
+/**
+ * 排序消息部分
+ */
 function sortParts(parts: Part[]) {
   return parts.filter((part) => !!part?.id).sort((a, b) => cmp(a.id, b.id))
 }
 
+/**
+ * 运行进行中的任务
+ */
 function runInflight(map: Map<string, Promise<void>>, key: string, task: () => Promise<void>) {
   const pending = map.get(key)
   if (pending) return pending
@@ -25,22 +31,34 @@ const keyFor = (directory: string, id: string) => `${directory}\n${id}`
 
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
+/**
+ * 乐观存储
+ */
 type OptimisticStore = {
   message: Record<string, Message[] | undefined>
   part: Record<string, Part[] | undefined>
 }
 
+/**
+ * 乐观添加输入
+ */
 type OptimisticAddInput = {
   sessionID: string
   message: Message
   parts: Part[]
 }
 
+/**
+ * 乐观移除输入
+ */
 type OptimisticRemoveInput = {
   sessionID: string
   messageID: string
 }
 
+/**
+ * 应用乐观添加操作
+ */
 export function applyOptimisticAdd(draft: OptimisticStore, input: OptimisticAddInput) {
   const messages = draft.message[input.sessionID]
   if (messages) {
@@ -52,6 +70,9 @@ export function applyOptimisticAdd(draft: OptimisticStore, input: OptimisticAddI
   draft.part[input.message.id] = sortParts(input.parts)
 }
 
+/**
+ * 应用乐观移除操作
+ */
 export function applyOptimisticRemove(draft: OptimisticStore, input: OptimisticRemoveInput) {
   const messages = draft.message[input.sessionID]
   if (messages) {

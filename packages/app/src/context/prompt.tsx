@@ -6,27 +6,42 @@ import type { FileSelection } from "@/context/file"
 import { Persist, persisted } from "@/utils/persist"
 import { checksum } from "@opencode-ai/util/encode"
 
+/**
+ * 提示词部分基类
+ */
 interface PartBase {
   content: string
   start: number
   end: number
 }
 
+/**
+ * 文本部分
+ */
 export interface TextPart extends PartBase {
   type: "text"
 }
 
+/**
+ * 文件附件部分
+ */
 export interface FileAttachmentPart extends PartBase {
   type: "file"
   path: string
   selection?: FileSelection
 }
 
+/**
+ * 代理部分
+ */
 export interface AgentPart extends PartBase {
   type: "agent"
   name: string
 }
 
+/**
+ * 图片附件部分
+ */
 export interface ImageAttachmentPart {
   type: "image"
   id: string
@@ -35,9 +50,19 @@ export interface ImageAttachmentPart {
   dataUrl: string
 }
 
+/**
+ * 提示词内容部分（文本、文件、代理或图片）
+ */
 export type ContentPart = TextPart | FileAttachmentPart | AgentPart | ImageAttachmentPart
+
+/**
+ * 提示词
+ */
 export type Prompt = ContentPart[]
 
+/**
+ * 文件上下文项
+ */
 export type FileContextItem = {
   type: "file"
   path: string
@@ -48,10 +73,16 @@ export type FileContextItem = {
   preview?: string
 }
 
+/**
+ * 上下文项
+ */
 export type ContextItem = FileContextItem
 
 export const DEFAULT_PROMPT: Prompt = [{ type: "text", content: "", start: 0, end: 0 }]
 
+/**
+ * 比较两个选区是否相等
+ */
 function isSelectionEqual(a?: FileSelection, b?: FileSelection) {
   if (!a && !b) return true
   if (!a || !b) return false
@@ -60,6 +91,9 @@ function isSelectionEqual(a?: FileSelection, b?: FileSelection) {
   )
 }
 
+/**
+ * 比较两个部分是否相等
+ */
 function isPartEqual(partA: ContentPart, partB: ContentPart) {
   switch (partA.type) {
     case "text":
@@ -73,6 +107,9 @@ function isPartEqual(partA: ContentPart, partB: ContentPart) {
   }
 }
 
+/**
+ * 比较两个提示词是否相等
+ */
 export function isPromptEqual(promptA: Prompt, promptB: Prompt): boolean {
   if (promptA.length !== promptB.length) return false
   for (let i = 0; i < promptA.length; i++) {
@@ -81,11 +118,17 @@ export function isPromptEqual(promptA: Prompt, promptB: Prompt): boolean {
   return true
 }
 
+/**
+ * 克隆选区
+ */
 function cloneSelection(selection?: FileSelection) {
   if (!selection) return undefined
   return { ...selection }
 }
 
+/**
+ * 克隆提示词部分
+ */
 function clonePart(part: ContentPart): ContentPart {
   if (part.type === "text") return { ...part }
   if (part.type === "image") return { ...part }
@@ -96,10 +139,16 @@ function clonePart(part: ContentPart): ContentPart {
   }
 }
 
+/**
+ * 克隆提示词
+ */
 function clonePrompt(prompt: Prompt): Prompt {
   return prompt.map(clonePart)
 }
 
+/**
+ * 生成上下文项键
+ */
 function contextItemKey(item: ContextItem) {
   if (item.type !== "file") return item.type
   const start = item.selection?.startLine
@@ -116,10 +165,16 @@ function contextItemKey(item: ContextItem) {
   return `${key}:c=${digest.slice(0, 8)}`
 }
 
+/**
+ * 检查是否为评论项
+ */
 function isCommentItem(item: ContextItem | (ContextItem & { key: string })) {
   return item.type === "file" && !!item.comment?.trim()
 }
 
+/**
+ * 创建提示词操作
+ */
 function createPromptActions(
   setStore: SetStoreFunction<{
     prompt: Prompt
@@ -156,6 +211,9 @@ type PromptCacheEntry = {
   dispose: VoidFunction
 }
 
+/**
+ * 创建提示词会话
+ */
 function createPromptSession(dir: string, id: string | undefined) {
   const legacy = `${dir}/prompt${id ? "/" + id : ""}.v2`
 

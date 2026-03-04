@@ -8,6 +8,14 @@ import { installCli } from "./cli"
 import { initI18n, t } from "./i18n"
 import { commands } from "./bindings"
 
+/**
+ * 创建 macOS 原生应用菜单
+ * - 应用菜单：关于、检查更新、安装 CLI、重新加载 WebView、重启应用、隐藏/显示等
+ * - 文件菜单：新建会话、打开项目、关闭窗口
+ * - 编辑菜单：撤销、重做、剪切、复制、粘贴、全选
+ * - 视图菜单：切换侧边栏、终端、文件树、前进/后退、上一会话/下一会话
+ * - 帮助菜单：文档、Discord 支持、反馈、报告问题
+ */
 export async function createMenu(trigger: (id: string) => void) {
   if (ostype() !== "macos") return
 

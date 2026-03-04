@@ -18,6 +18,9 @@ import type { State, VcsCache } from "./types"
 import { cmp, normalizeProviderList } from "./utils"
 import { formatServerError } from "@/utils/server-errors"
 
+/**
+ * 全局存储的类型定义
+ */
 type GlobalStore = {
   ready: boolean
   path: Path
@@ -31,6 +34,10 @@ type GlobalStore = {
   reload: undefined | "pending" | "complete"
 }
 
+/**
+ * 初始化全局状态
+ * 连接服务器并获取全局配置、项目列表、提供商信息等
+ */
 export async function bootstrapGlobal(input: {
   globalSDK: OpencodeClient
   connectErrorTitle: string
@@ -105,6 +112,9 @@ export async function bootstrapGlobal(input: {
   input.setGlobalStore("ready", true)
 }
 
+/**
+ * 按会话ID对项目进行分组
+ */
 function groupBySession<T extends { id: string; sessionID: string }>(input: T[]) {
   return input.reduce<Record<string, T[]>>((acc, item) => {
     if (!item?.id || !item.sessionID) return acc
@@ -115,6 +125,10 @@ function groupBySession<T extends { id: string; sessionID: string }>(input: T[])
   }, {})
 }
 
+/**
+ * 初始化目录级别的状态
+ * 获取当前项目、配置、代理、命令、会话等信息
+ */
 export async function bootstrapDirectory(input: {
   directory: string
   sdk: OpencodeClient

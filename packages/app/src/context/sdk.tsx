@@ -4,6 +4,9 @@ import { createGlobalEmitter } from "@solid-primitives/event-bus"
 import { type Accessor, createEffect, createMemo, onCleanup } from "solid-js"
 import { useGlobalSDK } from "./global-sdk"
 
+/**
+ * SDK事件映射
+ */
 type SDKEventMap = {
   [key in Event["type"]]: Extract<Event, { type: key }>
 }

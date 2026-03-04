@@ -1,11 +1,17 @@
 import type { AssistantMessage, Message } from "@opencode-ai/sdk/v2/client"
 
+/**
+ * AI 服务提供商
+ */
 type Provider = {
   id: string
   name?: string
   models: Record<string, Model | undefined>
 }
 
+/**
+ * AI 模型
+ */
 type Model = {
   name?: string
   limit: {
@@ -13,6 +19,9 @@ type Model = {
   }
 }
 
+/**
+ * 上下文使用情况
+ */
 type Context = {
   message: AssistantMessage
   provider?: Provider
@@ -29,15 +38,26 @@ type Context = {
   usage: number | null
 }
 
+/**
+ * 会话上下文指标
+ */
 type Metrics = {
   totalCost: number
   context: Context | undefined
 }
 
+/**
+ * 计算消息的总 token 数
+ * @param msg 助手消息
+ */
 const tokenTotal = (msg: AssistantMessage) => {
   return msg.tokens.input + msg.tokens.output + msg.tokens.reasoning + msg.tokens.cache.read + msg.tokens.cache.write
 }
 
+/**
+ * 获取最后一个包含 token 的助手消息
+ * @param messages 消息列表
+ */
 const lastAssistantWithTokens = (messages: Message[]) => {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i]
@@ -47,6 +67,11 @@ const lastAssistantWithTokens = (messages: Message[]) => {
   }
 }
 
+/**
+ * 构建会话上下文指标
+ * @param messages 消息列表
+ * @param providers 提供商列表
+ */
 const build = (messages: Message[] = [], providers: Provider[] = []): Metrics => {
   const totalCost = messages.reduce((sum, msg) => sum + (msg.role === "assistant" ? msg.cost : 0), 0)
   const message = lastAssistantWithTokens(messages)
@@ -77,6 +102,11 @@ const build = (messages: Message[] = [], providers: Provider[] = []): Metrics =>
   }
 }
 
+/**
+ * 获取会话上下文指标
+ * @param messages 消息列表
+ * @param providers 提供商列表
+ */
 export function getSessionContextMetrics(messages: Message[] = [], providers: Provider[] = []) {
   return build(messages, providers)
 }
