@@ -40,7 +40,123 @@ todo
 
 ---
 
-## 2. 指令系统 (Instruction Prompt)
+## 2. Message 与 Part 表详解
+
+### Message 表 vs Part 表
+
+| 维度     | Message 表                                | Part 表                                 |
+| -------- | ----------------------------------------- | --------------------------------------- |
+| 粒度     | 消息级别                                  | 消息内的片段级别                        |
+| 存储内容 | 消息的元信息 (role, agent, model, time等) | 消息的具体内容 (文本、工具调用、文件等) |
+| 关系     | 1个Message                                | 1个Message 对应 N个Part                 |
+
+### Message 消息类型
+
+**User 消息 - 用户输入**
+
+```typescript
+{
+  role: "user",
+  time: { created: number },
+  agent: string,          // 使用的agent名称
+  model: { providerID, modelID },
+  system?: string,        // 系统提示
+  tools?: Record<string, boolean>,  // 启用的工具
+  variant?: string
+}
+```
+
+**Assistant 消息 - AI响应**
+
+```typescript
+{
+  role: "assistant",
+  time: { created, completed },
+  error?: Error,          // 错误信息
+  parentID: string,       // 父消息ID
+  modelID, providerID,
+  mode?: "compaction" | "command" | "prompt" | "shell",
+  summary?: boolean,      // 是否为摘要消息
+  finish?: "stop" | "continue" | "error",
+  tokens?: {...},
+  cost?: number
+}
+```
+
+### Part 片段类型
+
+| 类型         | 说明           |
+| ------------ | -------------- |
+| `text`       | 文本输出       |
+| `tool`       | 工具调用及结果 |
+| `file`       | 文件内容/附件  |
+| `reasoning`  | 思考过程       |
+| `subtask`    | 子任务结果     |
+| `snapshot`   | 文件快照       |
+| `patch`      | 补丁           |
+| `compaction` | 压缩标记       |
+| `retry`      | 重试标记       |
+
+### 存储示例
+
+**用户消息 Example:**
+
+```typescript
+// Message 表
+{ id: "msg_001", role: "user", agent: "build", ... }
+
+// Part 表 (多个)
+[
+  { type: "text", text: "帮我写一个函数..." },
+  { type: "file", filename: "example.png", mime: "image/png" }
+]
+```
+
+**助手消息 Example:**
+
+```typescript
+// Message 表
+{ role: "assistant", parentID: "msg_001", modelID: "...", ... }
+
+// Part 表 (多个)
+[
+  { type: "reasoning", text: "思考过程..." },
+  { type: "text", text: "好的，我来帮你..." },
+  { type: "tool", tool: "write", state: { status: "completed", output: "..." } }
+]
+```
+
+### 存储流程
+
+```
+用户输入 → SessionPrompt.prompt()
+              ↓
+         Session.updateMessage() → message表
+              ↓
+         工具调用循环
+              ↓
+         Session.updatePart() → part表
+              ↓
+         完成 → time_updated 记录完成时间
+```
+
+### Part 来源说明
+
+Part 不仅仅来自工具调用，有多种来源：
+
+| 消息角色           | Part 来源                                   |
+| ------------------ | ------------------------------------------- |
+| **User** (用户)    | 用户输入的文本、用户上传的文件              |
+| **Assistant** (AI) | AI 生成的文本、思考过程、工具调用、工具结果 |
+
+**结论**：
+
+- User 消息的 Part → 用户产生
+- Assistant 消息的 Part → AI 产生
+
+---
+
+## 3. 指令系统 (Instruction Prompt)
 
 ### 指令来源优先级
 
