@@ -11,11 +11,21 @@ import PROMPT_CODEX from "./prompt/codex_header.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
 import type { Provider } from "@/provider/provider"
 
+/**
+ * SystemPrompt 命名空间
+ * 提供系统提示词的生成功能
+ */
 export namespace SystemPrompt {
+  /**
+   * 获取指令提示词（用于 Codex）
+   */
   export function instructions() {
     return PROMPT_CODEX.trim()
   }
 
+  /**
+   * 获取特定模型提供商的提示词
+   */
   export function provider(model: Provider.Model) {
     if (model.api.id.includes("gpt-5")) return [PROMPT_CODEX]
     if (model.api.id.includes("gpt-") || model.api.id.includes("o1") || model.api.id.includes("o3"))
@@ -26,6 +36,10 @@ export namespace SystemPrompt {
     return [PROMPT_ANTHROPIC_WITHOUT_TODO]
   }
 
+  /**
+   * 生成环境信息提示词
+   * 包含工作目录、平台等信息
+   */
   export async function environment(model: Provider.Model) {
     const project = Instance.project
     return [

@@ -20,10 +20,17 @@ import { assertExternalDirectory } from "./external-directory"
 
 const MAX_DIAGNOSTICS_PER_FILE = 20
 
+/**
+ * 规范化换行符，将 Windows 风格的 CRLF 转换为 LF
+ */
 function normalizeLineEndings(text: string): string {
   return text.replaceAll("\r\n", "\n")
 }
 
+/**
+ * 编辑工具 - 用于修改文件中的文本内容
+ * 支持多种匹配策略：精确匹配、换行符修剪、块锚点匹配、空白符标准化等
+ */
 export const EditTool = Tool.define("edit", {
   description: DESCRIPTION,
   parameters: z.object({
@@ -153,6 +160,12 @@ export const EditTool = Tool.define("edit", {
   },
 })
 
+/**
+ * 替换器类型 - 用于在内容中查找匹配的文本
+ * @param content - 文件的完整内容
+ * @param find - 要查找的字符串
+ * @yield - 匹配到的字符串
+ */
 export type Replacer = (content: string, find: string) => Generator<string, void, unknown>
 
 // Similarity thresholds for block anchor fallback matching
@@ -160,7 +173,8 @@ const SINGLE_CANDIDATE_SIMILARITY_THRESHOLD = 0.0
 const MULTIPLE_CANDIDATES_SIMILARITY_THRESHOLD = 0.3
 
 /**
- * Levenshtein distance algorithm implementation
+ * 计算两个字符串之间的 Levenshtein 距离（编辑距离）
+ * 用于衡量两个字符串的相似度
  */
 function levenshtein(a: string, b: string): number {
   // Handle empty strings
@@ -180,10 +194,17 @@ function levenshtein(a: string, b: string): number {
   return matrix[a.length][b.length]
 }
 
+/**
+ * 简单替换器 - 直接返回要查找的字符串，进行精确匹配
+ */
 export const SimpleReplacer: Replacer = function* (_content, find) {
   yield find
 }
 
+/**
+ * 换行符修剪替换器 - 忽略行尾空白进行匹配
+ * 比较时会去除每行的前后空白
+ */
 export const LineTrimmedReplacer: Replacer = function* (content, find) {
   const originalLines = content.split("\n")
   const searchLines = find.split("\n")
@@ -224,6 +245,10 @@ export const LineTrimmedReplacer: Replacer = function* (content, find) {
   }
 }
 
+/**
+ * 块锚点替换器 - 使用首尾行作为锚点进行匹配
+ * 适用于多行代码块的匹配，通过首尾行确定范围
+ */
 export const BlockAnchorReplacer: Replacer = function* (content, find) {
   const originalLines = content.split("\n")
   const searchLines = find.split("\n")
@@ -359,6 +384,9 @@ export const BlockAnchorReplacer: Replacer = function* (content, find) {
   }
 }
 
+/**
+ * 空白符标准化替换器 - 将多个连续空白字符压缩为单个空格进行匹配
+ */
 export const WhitespaceNormalizedReplacer: Replacer = function* (content, find) {
   const normalizeWhitespace = (text: string) => text.replace(/\s+/g, " ").trim()
   const normalizedFind = normalizeWhitespace(find)
@@ -403,6 +431,10 @@ export const WhitespaceNormalizedReplacer: Replacer = function* (content, find) 
   }
 }
 
+/**
+ * 缩进灵活替换器 - 忽略缩进差异进行匹配
+ * 比较时会去除行首的缩进
+ */
 export const IndentationFlexibleReplacer: Replacer = function* (content, find) {
   const removeIndentation = (text: string) => {
     const lines = text.split("\n")
@@ -431,6 +463,10 @@ export const IndentationFlexibleReplacer: Replacer = function* (content, find) {
   }
 }
 
+/**
+ * 转义符标准化替换器 - 处理字符串转义符进行匹配
+ * 如 \n、\t、\$ 等转义字符
+ */
 export const EscapeNormalizedReplacer: Replacer = function* (content, find) {
   const unescapeString = (str: string): string => {
     return str.replace(/\\(n|t|r|'|"|`|\\|\n|\$)/g, (match, capturedChar) => {
@@ -480,6 +516,10 @@ export const EscapeNormalizedReplacer: Replacer = function* (content, find) {
   }
 }
 
+/**
+ * 多匹配替换器 - 返回所有精确匹配的位置
+ * 允许 replaceAll 参数控制是否替换所有匹配项
+ */
 export const MultiOccurrenceReplacer: Replacer = function* (content, find) {
   // This replacer yields all exact matches, allowing the replace function
   // to handle multiple occurrences based on replaceAll parameter
@@ -494,6 +534,9 @@ export const MultiOccurrenceReplacer: Replacer = function* (content, find) {
   }
 }
 
+/**
+ * 修剪边界替换器 - 处理首尾空白差异进行匹配
+ */
 export const TrimmedBoundaryReplacer: Replacer = function* (content, find) {
   const trimmedFind = find.trim()
 
@@ -520,6 +563,10 @@ export const TrimmedBoundaryReplacer: Replacer = function* (content, find) {
   }
 }
 
+/**
+ * 上下文感知替换器 - 使用首尾行作为上下文锚点进行匹配
+ * 至少需要3行才能进行有意义的上下文匹配
+ */
 export const ContextAwareReplacer: Replacer = function* (content, find) {
   const findLines = find.split("\n")
   if (findLines.length < 3) {
@@ -578,6 +625,9 @@ export const ContextAwareReplacer: Replacer = function* (content, find) {
   }
 }
 
+/**
+ * 修剪 diff 输出，去除公共缩进
+ */
 export function trimDiff(diff: string): string {
   const lines = diff.split("\n")
   const contentLines = lines.filter(
@@ -614,6 +664,13 @@ export function trimDiff(diff: string): string {
   return trimmedLines.join("\n")
 }
 
+/**
+ * 替换函数 - 尝试多种匹配策略来查找并替换文本
+ * @param content - 文件内容
+ * @param oldString - 要替换的旧字符串
+ * @param newString - 替换后的新字符串
+ * @param replaceAll - 是否替换所有匹配项
+ */
 export function replace(content: string, oldString: string, newString: string, replaceAll = false): string {
   if (oldString === newString) {
     throw new Error("No changes to apply: oldString and newString are identical.")

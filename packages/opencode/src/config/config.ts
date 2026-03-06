@@ -36,6 +36,11 @@ import { Control } from "@/control"
 import { ConfigPaths } from "./paths"
 import { Filesystem } from "@/util/filesystem"
 
+/**
+ * 配置管理模块
+ * 负责加载、合并和管理 opencode 的各种配置
+ * 包括全局配置、项目配置、插件、代理、命令等
+ */
 export namespace Config {
   const ModelId = z.string().meta({ $ref: "https://models.dev/model-schema.json#/$defs/Model" })
 
@@ -54,13 +59,24 @@ export namespace Config {
     }
   }
 
+  /**
+   * 获取企业版托管配置目录
+   * 该目录下的配置具有最高优先级，会覆盖所有其他配置
+   * @returns 托管配置目录路径
+   */
   export function managedConfigDir() {
     return process.env.OPENCODE_TEST_MANAGED_CONFIG_DIR || systemManagedConfigDir()
   }
 
   const managedDir = managedConfigDir()
 
-  // Custom merge function that concatenates array fields instead of replacing them
+  /**
+   * 合并配置函数
+   * 将源配置合并到目标配置中，数组字段会拼接而非替换
+   * @param target 目标配置
+   * @param source 源配置
+   * @returns 合并后的配置
+   */
   function mergeConfigConcatArrays(target: Info, source: Info): Info {
     const merged = mergeDeep(target, source)
     if (target.plugin && source.plugin) {
@@ -72,6 +88,17 @@ export namespace Config {
     return merged
   }
 
+  /**
+   * 配置状态管理器
+   * 加载并合并所有配置源，按优先级顺序：
+   * 1) 远程 .well-known/opencode (组织默认配置)
+   * 2) 全局配置 (~/.config/opencode/opencode.json{,c})
+   * 3) 自定义配置 (OPENCODE_CONFIG 环境变量)
+   * 4) 项目配置 (opencode.json{,c})
+   * 5) .opencode 目录配置
+   * 6) 内联配置 (OPENCODE_CONFIG_CONTENT 环境变量)
+   * 7) 托管配置 (企业版，最高优先级)
+   */
   export const state = Instance.state(async () => {
     const auth = await Auth.all()
 
@@ -239,11 +266,19 @@ export namespace Config {
     }
   })
 
+  /**
+   * 等待所有配置目录的依赖安装完成
+   */
   export async function waitForDependencies() {
     const deps = await state().then((x) => x.deps)
     await Promise.all(deps)
   }
 
+  /**
+   * 安装配置目录的依赖
+   * 创建 package.json 并安装 @opencode-ai/plugin
+   * @param dir 配置目录路径
+   */
   export async function installDependencies(dir: string) {
     const pkg = path.join(dir, "package.json")
     const targetVersion = Installation.isLocal() ? "*" : Installation.VERSION
@@ -285,6 +320,11 @@ export namespace Config {
     }
   }
 
+  /**
+   * 检查配置目录是否需要安装依赖
+   * @param dir 配置目录路径
+   * @returns 是否需要安装依赖
+   */
   export async function needsInstall(dir: string) {
     // Some config dirs may be read-only.
     // Installing deps there will fail; skip installation in that case.
@@ -462,10 +502,11 @@ export namespace Config {
   }
 
   /**
-   * Extracts a canonical plugin name from a plugin specifier.
-   * - For file:// URLs: extracts filename without extension
-   * - For npm packages: extracts package name without version
-   *
+   * 从插件标识符中提取规范的插件名称
+   * - file:// URL: 提取文件名（不含扩展名）
+   * - npm 包: 提取包名（不含版本号）
+   * @param plugin 插件标识符
+   * @returns 规范的插件名称
    * @example
    * getPluginName("file:///path/to/plugin/foo.js") // "foo"
    * getPluginName("oh-my-opencode@2.4.3") // "oh-my-opencode"
@@ -483,15 +524,15 @@ export namespace Config {
   }
 
   /**
-   * Deduplicates plugins by name, with later entries (higher priority) winning.
-   * Priority order (highest to lowest):
-   * 1. Local plugin/ directory
-   * 2. Local opencode.json
-   * 3. Global plugin/ directory
-   * 4. Global opencode.json
-   *
-   * Since plugins are added in low-to-high priority order,
-   * we reverse, deduplicate (keeping first occurrence), then restore order.
+   * 对插件列表进行去重
+   * 后出现的插件（高优先级）会覆盖先出现的同名插件
+   * 优先级顺序（从高到低）:
+   * 1. 本地 plugin/ 目录
+   * 2. 本地 opencode.json
+   * 3. 全局 plugin/ 目录
+   * 4. 全局 opencode.json
+   * @param plugins 插件标识符数组
+   * @returns 去重后的插件数组
    */
   export function deduplicatePlugins(plugins: string[]): string[] {
     // seenNames: canonical plugin names for duplicate detection
@@ -513,6 +554,10 @@ export namespace Config {
     return uniqueSpecifiers.toReversed()
   }
 
+  /**
+   * MCP 本地服务器配置
+   * 用于配置本地运行的 MCP (Model Context Protocol) 服务器
+   */
   export const McpLocal = z
     .object({
       type: z.literal("local").describe("Type of MCP server connection"),
@@ -534,6 +579,10 @@ export namespace Config {
       ref: "McpLocalConfig",
     })
 
+  /**
+   * MCP OAuth 认证配置
+   * 用于配置 MCP 服务器的 OAuth 认证
+   */
   export const McpOAuth = z
     .object({
       clientId: z
@@ -549,6 +598,10 @@ export namespace Config {
     })
   export type McpOAuth = z.infer<typeof McpOAuth>
 
+  /**
+   * MCP 远程服务器配置
+   * 用于配置远程 MCP 服务器连接
+   */
   export const McpRemote = z
     .object({
       type: z.literal("remote").describe("Type of MCP server connection"),
@@ -573,19 +626,37 @@ export namespace Config {
       ref: "McpRemoteConfig",
     })
 
+  /**
+   * MCP 服务器配置（联合类型）
+   * 支持本地和远程两种 MCP 服务器配置
+   */
   export const Mcp = z.discriminatedUnion("type", [McpLocal, McpRemote])
   export type Mcp = z.infer<typeof Mcp>
 
+  /**
+   * 权限操作类型
+   * - ask: 询问用户
+   * - allow: 允许操作
+   * - deny: 拒绝操作
+   */
   export const PermissionAction = z.enum(["ask", "allow", "deny"]).meta({
     ref: "PermissionActionConfig",
   })
   export type PermissionAction = z.infer<typeof PermissionAction>
 
+  /**
+   * 权限对象
+   * 工具名称到权限操作的映射
+   */
   export const PermissionObject = z.record(z.string(), PermissionAction).meta({
     ref: "PermissionObjectConfig",
   })
   export type PermissionObject = z.infer<typeof PermissionObject>
 
+  /**
+   * 权限规则
+   * 可以是单一操作（PermissionAction）或对象（PermissionObject）
+   */
   export const PermissionRule = z.union([PermissionAction, PermissionObject]).meta({
     ref: "PermissionRuleConfig",
   })
@@ -611,6 +682,10 @@ export namespace Config {
     return result
   }
 
+  /**
+   * 权限配置
+   * 定义各种操作的权限规则，包括 read、edit、glob、grep、list、bash、task 等
+   */
   export const Permission = z
     .preprocess(
       permissionPreprocess,
@@ -644,6 +719,10 @@ export namespace Config {
     })
   export type Permission = z.infer<typeof Permission>
 
+  /**
+   * 命令配置
+   * 定义自定义命令的模板和元数据
+   */
   export const Command = z.object({
     template: z.string(),
     description: z.string().optional(),
@@ -653,6 +732,10 @@ export namespace Config {
   })
   export type Command = z.infer<typeof Command>
 
+  /**
+   * 技能配置
+   * 定义额外的技能文件夹路径和远程技能 URL
+   */
   export const Skills = z.object({
     paths: z.array(z.string()).optional().describe("Additional paths to skill folders"),
     urls: z
@@ -662,6 +745,10 @@ export namespace Config {
   })
   export type Skills = z.infer<typeof Skills>
 
+  /**
+   * 代理配置
+   * 定义代理的模型、提示词、工具、权限等
+   */
   export const Agent = z
     .object({
       model: ModelId.optional(),
@@ -751,6 +838,10 @@ export namespace Config {
     })
   export type Agent = z.infer<typeof Agent>
 
+  /**
+   * 键盘快捷键配置
+   * 定义应用程序的各种键盘快捷键
+   */
   export const Keybinds = z
     .object({
       leader: z.string().optional().default("ctrl+x").describe("Leader key for keybind combinations"),
@@ -910,6 +1001,10 @@ export namespace Config {
       ref: "KeybindsConfig",
     })
 
+  /**
+   * 服务器配置
+   * 定义 opencode serve 命令的服务器选项
+   */
   export const Server = z
     .object({
       port: z.number().int().positive().optional().describe("Port to listen on"),
@@ -923,11 +1018,19 @@ export namespace Config {
       ref: "ServerConfig",
     })
 
+  /**
+   * 布局配置
+   * 定义 UI 布局模式：auto 或 stretch
+   */
   export const Layout = z.enum(["auto", "stretch"]).meta({
     ref: "LayoutConfig",
   })
   export type Layout = z.infer<typeof Layout>
 
+  /**
+   * 提供商配置
+   * 定义模型提供商的 API 密钥、基础 URL、模型覆盖等
+   */
   export const Provider = ModelsDev.Provider.partial()
     .extend({
       whitelist: z.array(z.string()).optional(),
@@ -981,6 +1084,10 @@ export namespace Config {
     })
   export type Provider = z.infer<typeof Provider>
 
+  /**
+   * 完整的配置信息
+   * 包含所有 opencode 配置选项的根类型
+   */
   export const Info = z
     .object({
       $schema: z.string().optional().describe("JSON schema reference for configuration validation"),
@@ -1175,6 +1282,11 @@ export namespace Config {
 
   export type Info = z.output<typeof Info>
 
+  /**
+   * 获取全局配置
+   * 加载用户主目录下的全局配置文件（config.json, opencode.json, opencode.jsonc）
+   * @returns 全局配置信息
+   */
   export const global = lazy(async () => {
     let result: Info = pipe(
       {},
@@ -1269,6 +1381,9 @@ export namespace Config {
   }
   export const { JsonError, InvalidError } = ConfigPaths
 
+  /**
+   * 配置目录拼写错误类型
+   */
   export const ConfigDirectoryTypoError = NamedError.create(
     "ConfigDirectoryTypoError",
     z.object({
@@ -1278,14 +1393,27 @@ export namespace Config {
     }),
   )
 
+  /**
+   * 获取当前项目的配置信息
+   * @returns 配置信息对象
+   */
   export async function get() {
     return state().then((x) => x.config)
   }
 
+  /**
+   * 获取全局配置信息
+   * @returns 全局配置对象
+   */
   export async function getGlobal() {
     return global()
   }
 
+  /**
+   * 更新项目配置
+   * 将新配置合并到项目的 config.json 文件中
+   * @param config 要更新的配置信息
+   */
   export async function update(config: Info) {
     const filepath = path.join(Instance.directory, "config.json")
     const existing = await loadFile(filepath)

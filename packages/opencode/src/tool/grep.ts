@@ -12,6 +12,10 @@ import { assertExternalDirectory } from "./external-directory"
 
 const MAX_LINE_LENGTH = 2000
 
+/**
+ * Grep 工具 - 在文件内容中搜索正则表达式匹配项
+ * 使用 ripgrep 进行高效的文本搜索
+ */
 export const GrepTool = Tool.define("grep", {
   description: DESCRIPTION,
   parameters: z.object({

@@ -16,13 +16,29 @@ import { iife } from "@/util/iife"
 import { type SystemError } from "bun"
 import type { Provider } from "@/provider/provider"
 
+/**
+ * MessageV2 命名空间
+ * 定义消息和片段的类型、事件和工具函数
+ */
 export namespace MessageV2 {
+  /**
+   * 检查MIME类型是否为媒体类型（图片或PDF）
+   */
   export function isMedia(mime: string) {
     return mime.startsWith("image/") || mime === "application/pdf"
   }
 
+  /**
+   * 输出长度超限错误
+   */
   export const OutputLengthError = NamedError.create("MessageOutputLengthError", z.object({}))
+  /**
+   * 用户中止错误
+   */
   export const AbortedError = NamedError.create("MessageAbortedError", z.object({ message: z.string() }))
+  /**
+   * 结构化输出错误
+   */
   export const StructuredOutputError = NamedError.create(
     "StructuredOutputError",
     z.object({
@@ -30,6 +46,9 @@ export namespace MessageV2 {
       retries: z.number(),
     }),
   )
+  /**
+   * 认证错误
+   */
   export const AuthError = NamedError.create(
     "ProviderAuthError",
     z.object({
@@ -37,6 +56,9 @@ export namespace MessageV2 {
       message: z.string(),
     }),
   )
+  /**
+   * API错误
+   */
   export const APIError = NamedError.create(
     "APIError",
     z.object({
@@ -49,11 +71,17 @@ export namespace MessageV2 {
     }),
   )
   export type APIError = z.infer<typeof APIError.Schema>
+  /**
+   * 上下文溢出错误
+   */
   export const ContextOverflowError = NamedError.create(
     "ContextOverflowError",
     z.object({ message: z.string(), responseBody: z.string().optional() }),
   )
 
+  /**
+   * 文本输出格式
+   */
   export const OutputFormatText = z
     .object({
       type: z.literal("text"),
@@ -62,6 +90,9 @@ export namespace MessageV2 {
       ref: "OutputFormatText",
     })
 
+  /**
+   * JSON Schema 输出格式
+   */
   export const OutputFormatJsonSchema = z
     .object({
       type: z.literal("json_schema"),
@@ -72,6 +103,9 @@ export namespace MessageV2 {
       ref: "OutputFormatJsonSchema",
     })
 
+  /**
+   * 输出格式联合类型
+   */
   export const Format = z.discriminatedUnion("type", [OutputFormatText, OutputFormatJsonSchema]).meta({
     ref: "OutputFormat",
   })
@@ -83,6 +117,9 @@ export namespace MessageV2 {
     messageID: z.string(),
   })
 
+  /**
+   * 快照片段 - 存储对话摘要
+   */
   export const SnapshotPart = PartBase.extend({
     type: z.literal("snapshot"),
     snapshot: z.string(),
@@ -91,6 +128,9 @@ export namespace MessageV2 {
   })
   export type SnapshotPart = z.infer<typeof SnapshotPart>
 
+  /**
+   * 补丁片段 - 存储代码变更
+   */
   export const PatchPart = PartBase.extend({
     type: z.literal("patch"),
     hash: z.string(),
@@ -100,6 +140,9 @@ export namespace MessageV2 {
   })
   export type PatchPart = z.infer<typeof PatchPart>
 
+  /**
+   * 文本片段
+   */
   export const TextPart = PartBase.extend({
     type: z.literal("text"),
     text: z.string(),
@@ -117,6 +160,9 @@ export namespace MessageV2 {
   })
   export type TextPart = z.infer<typeof TextPart>
 
+  /**
+   * 推理片段 - 存储模型的推理过程
+   */
   export const ReasoningPart = PartBase.extend({
     type: z.literal("reasoning"),
     text: z.string(),
@@ -142,6 +188,9 @@ export namespace MessageV2 {
       }),
   })
 
+  /**
+   * 文件来源 - 引用文件内容
+   */
   export const FileSource = FilePartSourceBase.extend({
     type: z.literal("file"),
     path: z.string(),
@@ -149,6 +198,9 @@ export namespace MessageV2 {
     ref: "FileSource",
   })
 
+  /**
+   * 符号来源 - 引用代码中的符号（函数、类等）
+   */
   export const SymbolSource = FilePartSourceBase.extend({
     type: z.literal("symbol"),
     path: z.string(),
@@ -159,6 +211,9 @@ export namespace MessageV2 {
     ref: "SymbolSource",
   })
 
+  /**
+   * 资源来源 - 引用MCP资源
+   */
   export const ResourceSource = FilePartSourceBase.extend({
     type: z.literal("resource"),
     clientName: z.string(),
@@ -171,6 +226,9 @@ export namespace MessageV2 {
     ref: "FilePartSource",
   })
 
+  /**
+   * 文件片段 - 包含文件内容或附件
+   */
   export const FilePart = PartBase.extend({
     type: z.literal("file"),
     mime: z.string(),
@@ -182,6 +240,9 @@ export namespace MessageV2 {
   })
   export type FilePart = z.infer<typeof FilePart>
 
+  /**
+   * Agent片段 - 引用其他Agent
+   */
   export const AgentPart = PartBase.extend({
     type: z.literal("agent"),
     name: z.string(),
@@ -197,6 +258,9 @@ export namespace MessageV2 {
   })
   export type AgentPart = z.infer<typeof AgentPart>
 
+  /**
+   * 压缩片段 - 标记需要进行对话压缩
+   */
   export const CompactionPart = PartBase.extend({
     type: z.literal("compaction"),
     auto: z.boolean(),
@@ -206,6 +270,9 @@ export namespace MessageV2 {
   })
   export type CompactionPart = z.infer<typeof CompactionPart>
 
+  /**
+   * 子任务片段 - 创建子任务
+   */
   export const SubtaskPart = PartBase.extend({
     type: z.literal("subtask"),
     prompt: z.string(),
@@ -223,6 +290,9 @@ export namespace MessageV2 {
   })
   export type SubtaskPart = z.infer<typeof SubtaskPart>
 
+  /**
+   * 重试片段 - 记录重试信息
+   */
   export const RetryPart = PartBase.extend({
     type: z.literal("retry"),
     attempt: z.number(),
@@ -235,6 +305,9 @@ export namespace MessageV2 {
   })
   export type RetryPart = z.infer<typeof RetryPart>
 
+  /**
+   * 步骤开始片段
+   */
   export const StepStartPart = PartBase.extend({
     type: z.literal("step-start"),
     snapshot: z.string().optional(),
@@ -243,6 +316,9 @@ export namespace MessageV2 {
   })
   export type StepStartPart = z.infer<typeof StepStartPart>
 
+  /**
+   * 步骤完成片段 - 记录步骤完成时的信息
+   */
   export const StepFinishPart = PartBase.extend({
     type: z.literal("step-finish"),
     reason: z.string(),
@@ -263,6 +339,9 @@ export namespace MessageV2 {
   })
   export type StepFinishPart = z.infer<typeof StepFinishPart>
 
+  /**
+   * 工具等待中状态
+   */
   export const ToolStatePending = z
     .object({
       status: z.literal("pending"),
@@ -275,6 +354,9 @@ export namespace MessageV2 {
 
   export type ToolStatePending = z.infer<typeof ToolStatePending>
 
+  /**
+   * 工具运行中状态
+   */
   export const ToolStateRunning = z
     .object({
       status: z.literal("running"),
@@ -290,6 +372,9 @@ export namespace MessageV2 {
     })
   export type ToolStateRunning = z.infer<typeof ToolStateRunning>
 
+  /**
+   * 工具完成状态
+   */
   export const ToolStateCompleted = z
     .object({
       status: z.literal("completed"),
@@ -309,6 +394,9 @@ export namespace MessageV2 {
     })
   export type ToolStateCompleted = z.infer<typeof ToolStateCompleted>
 
+  /**
+   * 工具错误状态
+   */
   export const ToolStateError = z
     .object({
       status: z.literal("error"),
@@ -325,12 +413,18 @@ export namespace MessageV2 {
     })
   export type ToolStateError = z.infer<typeof ToolStateError>
 
+  /**
+   * 工具状态联合类型
+   */
   export const ToolState = z
     .discriminatedUnion("status", [ToolStatePending, ToolStateRunning, ToolStateCompleted, ToolStateError])
     .meta({
       ref: "ToolState",
     })
 
+  /**
+   * 工具片段 - 包含工具调用信息
+   */
   export const ToolPart = PartBase.extend({
     type: z.literal("tool"),
     callID: z.string(),
@@ -347,6 +441,9 @@ export namespace MessageV2 {
     sessionID: z.string(),
   })
 
+  /**
+   * 用户消息
+   */
   export const User = Base.extend({
     role: z.literal("user"),
     time: z.object({
@@ -373,6 +470,9 @@ export namespace MessageV2 {
   })
   export type User = z.infer<typeof User>
 
+  /**
+   * 片段联合类型
+   */
   export const Part = z
     .discriminatedUnion("type", [
       TextPart,
@@ -393,6 +493,9 @@ export namespace MessageV2 {
     })
   export type Part = z.infer<typeof Part>
 
+  /**
+   * 助手消息
+   */
   export const Assistant = Base.extend({
     role: z.literal("assistant"),
     time: z.object({
@@ -442,11 +545,17 @@ export namespace MessageV2 {
   })
   export type Assistant = z.infer<typeof Assistant>
 
+  /**
+   * 消息信息联合类型（用户或助手）
+   */
   export const Info = z.discriminatedUnion("role", [User, Assistant]).meta({
     ref: "Message",
   })
   export type Info = z.infer<typeof Info>
 
+  /**
+   * 消息事件定义
+   */
   export const Event = {
     Updated: BusEvent.define(
       "message.updated",
@@ -487,12 +596,19 @@ export namespace MessageV2 {
     ),
   }
 
+  /**
+   * 带片段的消息
+   */
   export const WithParts = z.object({
     info: Info,
     parts: z.array(Part),
   })
   export type WithParts = z.infer<typeof WithParts>
 
+  /**
+   * 将消息转换为模型消息格式
+   * 用于发送给AI模型
+   */
   export function toModelMessages(
     input: WithParts[],
     model: Provider.Model,
@@ -728,6 +844,9 @@ export namespace MessageV2 {
     )
   }
 
+  /**
+   * 流式获取会话消息
+   */
   export const stream = fn(Identifier.schema("session"), async function* (sessionID) {
     const size = 50
     let offset = 0
@@ -781,6 +900,9 @@ export namespace MessageV2 {
     }
   })
 
+  /**
+   * 获取消息的所有片段
+   */
   export const parts = fn(Identifier.schema("message"), async (message_id) => {
     const rows = Database.use((db) =>
       db.select().from(PartTable).where(eq(PartTable.message_id, message_id)).orderBy(PartTable.id).all(),
@@ -790,6 +912,9 @@ export namespace MessageV2 {
     )
   })
 
+  /**
+   * 根据ID获取消息
+   */
   export const get = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -806,6 +931,9 @@ export namespace MessageV2 {
     },
   )
 
+  /**
+   * 过滤压缩后的消息流
+   */
   export async function filterCompacted(stream: AsyncIterable<MessageV2.WithParts>) {
     const result = [] as MessageV2.WithParts[]
     const completed = new Set<string>()
@@ -824,6 +952,9 @@ export namespace MessageV2 {
     return result
   }
 
+  /**
+   * 将错误转换为消息错误格式
+   */
   export function fromError(e: unknown, ctx: { providerID: string }) {
     switch (true) {
       case e instanceof DOMException && e.name === "AbortError":

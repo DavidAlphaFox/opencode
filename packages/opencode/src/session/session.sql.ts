@@ -5,9 +5,17 @@ import type { Snapshot } from "@/snapshot"
 import type { PermissionNext } from "@/permission/next"
 import { Timestamps } from "@/storage/schema.sql"
 
+/**
+ * Session 数据库表定义
+ * 包含会话、消息、片段、待办事项和权限表
+ */
+
 type PartData = Omit<MessageV2.Part, "id" | "sessionID" | "messageID">
 type InfoData = Omit<MessageV2.Info, "id" | "sessionID">
 
+/**
+ * 会话表
+ */
 export const SessionTable = sqliteTable(
   "session",
   {
@@ -39,6 +47,9 @@ export const SessionTable = sqliteTable(
   ],
 )
 
+/**
+ * 消息表
+ */
 export const MessageTable = sqliteTable(
   "message",
   {
@@ -52,6 +63,9 @@ export const MessageTable = sqliteTable(
   (table) => [index("message_session_idx").on(table.session_id)],
 )
 
+/**
+ * 消息片段表
+ */
 export const PartTable = sqliteTable(
   "part",
   {
@@ -66,6 +80,9 @@ export const PartTable = sqliteTable(
   (table) => [index("part_message_idx").on(table.message_id), index("part_session_idx").on(table.session_id)],
 )
 
+/**
+ * 待办事项表
+ */
 export const TodoTable = sqliteTable(
   "todo",
   {
@@ -84,6 +101,9 @@ export const TodoTable = sqliteTable(
   ],
 )
 
+/**
+ * 权限表
+ */
 export const PermissionTable = sqliteTable("permission", {
   project_id: text()
     .primaryKey()

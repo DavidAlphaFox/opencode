@@ -8,6 +8,10 @@ const MAX_RESPONSE_SIZE = 5 * 1024 * 1024 // 5MB
 const DEFAULT_TIMEOUT = 30 * 1000 // 30 seconds
 const MAX_TIMEOUT = 120 * 1000 // 2 minutes
 
+/**
+ * WebFetch 工具 - 用于获取网页内容
+ * 支持 text、markdown、html 三种格式返回
+ */
 export const WebFetchTool = Tool.define("webfetch", {
   description: DESCRIPTION,
   parameters: z.object({
@@ -161,6 +165,10 @@ export const WebFetchTool = Tool.define("webfetch", {
   },
 })
 
+/**
+ * 从 HTML 中提取纯文本内容
+ * 移除 script、style、noscript 等标签内容
+ */
 async function extractTextFromHTML(html: string) {
   let text = ""
   let skipContent = false
@@ -193,6 +201,9 @@ async function extractTextFromHTML(html: string) {
   return text.trim()
 }
 
+/**
+ * 将 HTML 内容转换为 Markdown 格式
+ */
 function convertHTMLToMarkdown(html: string): string {
   const turndownService = new TurndownService({
     headingStyle: "atx",

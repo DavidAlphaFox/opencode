@@ -6,6 +6,11 @@ import { iife } from "@/util/iife"
 import { GlobalBus } from "@/bus/global"
 import { Filesystem } from "@/util/filesystem"
 
+/**
+ * 实例管理模块
+ * 负责项目实例的创建、缓存和生命周期管理
+ */
+
 interface Context {
   directory: string
   worktree: string
@@ -18,7 +23,16 @@ const disposal = {
   all: undefined as Promise<void> | undefined,
 }
 
+/**
+ * 项目实例管理对象
+ * 提供项目实例的创建、访问和销毁功能
+ */
 export const Instance = {
+  /**
+   * 提供一个项目实例上下文，执行指定函数
+   * @param input 包含目录、初始化函数和执行函数的配置对象
+   * @returns 返回执行函数的结果
+   */
   async provide<R>(input: { directory: string; init?: () => Promise<any>; fn: () => R }): Promise<R> {
     let existing = cache.get(input.directory)
     if (!existing) {
@@ -42,19 +56,22 @@ export const Instance = {
       return input.fn()
     })
   },
+  /** 获取当前实例的工作目录 */
   get directory() {
     return context.use().directory
   },
+  /** 获取当前实例的沙箱目录（git worktree） */
   get worktree() {
     return context.use().worktree
   },
+  /** 获取当前实例的项目信息 */
   get project() {
     return context.use().project
   },
   /**
-   * Check if a path is within the project boundary.
-   * Returns true if path is inside Instance.directory OR Instance.worktree.
-   * Paths within the worktree but outside the working directory should not trigger external_directory permission.
+   * 检查路径是否在项目边界内
+   * 如果路径在 Instance.directory 或 Instance.worktree 内返回 true
+   * @param filepath 要检查的文件路径
    */
   containsPath(filepath: string) {
     if (Filesystem.contains(Instance.directory, filepath)) return true
@@ -63,10 +80,20 @@ export const Instance = {
     if (Instance.worktree === "/") return false
     return Filesystem.contains(Instance.worktree, filepath)
   },
+  /**
+   * 创建实例级别的状态管理
+   * @param init 状态初始化函数
+   * @param dispose 可选的状态销毁函数
+   * @returns 返回访问状态的函数
+   */
   state<S>(init: () => S, dispose?: (state: Awaited<S>) => Promise<void>): () => S {
     return State.create(() => Instance.directory, init, dispose)
   },
-  async dispose() {
+  /**
+   * 销毁当前清理相关实例，状态和缓存
+   */
+  dispose() {
+    async
     Log.Default.info("disposing instance", { directory: Instance.directory })
     await State.dispose(Instance.directory)
     cache.delete(Instance.directory)
@@ -80,6 +107,10 @@ export const Instance = {
       },
     })
   },
+  /**
+   * 销毁所有项目实例
+   * @returns 返回所有实例清理完成的 Promise
+   */
   async disposeAll() {
     if (disposal.all) return disposal.all
 

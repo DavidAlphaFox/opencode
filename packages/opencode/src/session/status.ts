@@ -3,7 +3,14 @@ import { Bus } from "@/bus"
 import { Instance } from "@/project/instance"
 import z from "zod"
 
+/**
+ * SessionStatus 命名空间
+ * 管理会话状态（空闲、重试中、忙碌）
+ */
 export namespace SessionStatus {
+  /**
+   * 会话状态信息类型
+   */
   export const Info = z
     .union([
       z.object({
@@ -24,6 +31,9 @@ export namespace SessionStatus {
     })
   export type Info = z.infer<typeof Info>
 
+  /**
+   * 会话状态事件定义
+   */
   export const Event = {
     Status: BusEvent.define(
       "session.status",
@@ -46,6 +56,9 @@ export namespace SessionStatus {
     return data
   })
 
+  /**
+   * 获取会话状态
+   */
   export function get(sessionID: string) {
     return (
       state()[sessionID] ?? {
@@ -54,10 +67,16 @@ export namespace SessionStatus {
     )
   }
 
+  /**
+   * 列出所有会话状态
+   */
   export function list() {
     return state()
   }
 
+  /**
+   * 设置会话状态
+   */
   export function set(sessionID: string, status: Info) {
     Bus.publish(Event.Status, {
       sessionID,

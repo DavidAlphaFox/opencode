@@ -18,6 +18,10 @@ const MAX_LINE_SUFFIX = `... (line truncated to ${MAX_LINE_LENGTH} chars)`
 const MAX_BYTES = 50 * 1024
 const MAX_BYTES_LABEL = `${MAX_BYTES / 1024} KB`
 
+/**
+ * 读取工具 - 用于读取文件或目录内容
+ * 支持读取文本文件、二进制文件（图片、PDF）、以及目录列表
+ */
 export const ReadTool = Tool.define("read", {
   description: DESCRIPTION,
   parameters: z.object({
@@ -232,6 +236,10 @@ export const ReadTool = Tool.define("read", {
   },
 })
 
+/**
+ * 判断文件是否为二进制文件
+ * 通过文件扩展名和文件内容中的不可打印字符比例来判断
+ */
 async function isBinaryFile(filepath: string, fileSize: number): Promise<boolean> {
   const ext = path.extname(filepath).toLowerCase()
   // binary check for common non-text extensions

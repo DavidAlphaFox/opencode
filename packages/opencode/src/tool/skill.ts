@@ -7,6 +7,10 @@ import { PermissionNext } from "../permission/next"
 import { Ripgrep } from "../file/ripgrep"
 import { iife } from "@/util/iife"
 
+/**
+ * Skill 工具 - 用于加载专门的技能模块
+ * 技能提供领域特定的指令和工作流
+ */
 export const SkillTool = Tool.define("skill", async (ctx) => {
   const skills = await Skill.all()
 

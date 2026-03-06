@@ -30,6 +30,10 @@ import { Global } from "@/global"
 import type { LanguageModelV2Usage } from "@ai-sdk/provider"
 import { iife } from "@/util/iife"
 
+/**
+ * Session 命名空间
+ * 提供会话管理、消息处理、权限设置等功能
+ */
 export namespace Session {
   const log = Log.create({ service: "session" })
 
@@ -40,6 +44,10 @@ export namespace Session {
     return (isChild ? childTitlePrefix : parentTitlePrefix) + new Date().toISOString()
   }
 
+  /**
+   * 检查标题是否为默认标题
+   * 默认标题格式: "New session - " 或 "Child session - " 加上 ISO 时间戳
+   */
   export function isDefaultTitle(title: string) {
     return new RegExp(
       `^(${parentTitlePrefix}|${childTitlePrefix})\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$`,
@@ -48,6 +56,9 @@ export namespace Session {
 
   type SessionRow = typeof SessionTable.$inferSelect
 
+  /**
+   * 从数据库行转换为会话信息对象
+   */
   export function fromRow(row: SessionRow): Info {
     const summary =
       row.summary_additions !== null || row.summary_deletions !== null || row.summary_files !== null
@@ -82,6 +93,9 @@ export namespace Session {
     }
   }
 
+  /**
+   * 将会话信息对象转换为数据库行
+   */
   export function toRow(info: Info) {
     return {
       id: info.id,
@@ -116,6 +130,9 @@ export namespace Session {
     return `${title} (fork #1)`
   }
 
+  /**
+   * 会话信息类型定义
+   */
   export const Info = z
     .object({
       id: Identifier.schema("session"),
@@ -160,6 +177,9 @@ export namespace Session {
     })
   export type Info = z.output<typeof Info>
 
+  /**
+   * 项目信息类型定义
+   */
   export const ProjectInfo = z
     .object({
       id: z.string(),
@@ -171,6 +191,9 @@ export namespace Session {
     })
   export type ProjectInfo = z.output<typeof ProjectInfo>
 
+  /**
+   * 全局会话信息类型定义（包含项目信息）
+   */
   export const GlobalInfo = Info.extend({
     project: ProjectInfo.nullable(),
   }).meta({
@@ -178,6 +201,9 @@ export namespace Session {
   })
   export type GlobalInfo = z.output<typeof GlobalInfo>
 
+  /**
+   * 会话事件定义
+   */
   export const Event = {
     Created: BusEvent.define(
       "session.created",
@@ -213,6 +239,9 @@ export namespace Session {
     ),
   }
 
+  /**
+   * 创建新会话
+   */
   export const create = fn(
     z
       .object({
@@ -231,6 +260,10 @@ export namespace Session {
     },
   )
 
+  /**
+   * 复制会话
+   * 复制原会话的消息到新会话，可指定复制到哪个消息为止
+   */
   export const fork = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -273,6 +306,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 更新会话最后活跃时间
+   */
   export const touch = fn(Identifier.schema("session"), async (sessionID) => {
     const now = Date.now()
     Database.use((db) => {
@@ -288,6 +324,9 @@ export namespace Session {
     })
   })
 
+  /**
+   * 创建新会话的内部实现
+   */
   export async function createNext(input: {
     id?: string
     title?: string
@@ -330,6 +369,9 @@ export namespace Session {
     return result
   }
 
+  /**
+   * 获取会话计划文件路径
+   */
   export function plan(input: { slug: string; time: { created: number } }) {
     const base = Instance.project.vcs
       ? path.join(Instance.worktree, ".opencode", "plans")
@@ -337,12 +379,18 @@ export namespace Session {
     return path.join(base, [input.time.created, input.slug].join("-") + ".md")
   }
 
+  /**
+   * 根据ID获取会话
+   */
   export const get = fn(Identifier.schema("session"), async (id) => {
     const row = Database.use((db) => db.select().from(SessionTable).where(eq(SessionTable.id, id)).get())
     if (!row) throw new NotFoundError({ message: `Session not found: ${id}` })
     return fromRow(row)
   })
 
+  /**
+   * 分享会话
+   */
   export const share = fn(Identifier.schema("session"), async (id) => {
     const cfg = await Config.get()
     if (cfg.share === "disabled") {
@@ -359,6 +407,9 @@ export namespace Session {
     return share
   })
 
+  /**
+   * 取消分享会话
+   */
   export const unshare = fn(Identifier.schema("session"), async (id) => {
     // Use ShareNext to remove the share (same as share function uses ShareNext to create)
     const { ShareNext } = await import("@/share/share-next")
@@ -371,6 +422,9 @@ export namespace Session {
     })
   })
 
+  /**
+   * 设置会话标题
+   */
   export const setTitle = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -392,6 +446,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 设置会话归档时间
+   */
   export const setArchived = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -413,6 +470,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 设置会话权限
+   */
   export const setPermission = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -434,6 +494,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 设置会话回滚信息
+   */
   export const setRevert = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -462,6 +525,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 清除会话回滚信息
+   */
   export const clearRevert = fn(Identifier.schema("session"), async (sessionID) => {
     return Database.use((db) => {
       const row = db
@@ -480,6 +546,9 @@ export namespace Session {
     })
   })
 
+  /**
+   * 设置会话摘要信息
+   */
   export const setSummary = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -506,6 +575,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 获取会话差异
+   */
   export const diff = fn(Identifier.schema("session"), async (sessionID) => {
     try {
       return await Storage.read<Snapshot.FileDiff[]>(["session_diff", sessionID])
@@ -514,6 +586,9 @@ export namespace Session {
     }
   })
 
+  /**
+   * 获取会话消息列表
+   */
   export const messages = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -530,6 +605,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 列出当前项目的会话
+   */
   export function* list(input?: {
     directory?: string
     workspaceID?: string
@@ -573,6 +651,9 @@ export namespace Session {
     }
   }
 
+  /**
+   * 列出所有项目的全局会话
+   */
   export function* listGlobal(input?: {
     directory?: string
     roots?: boolean
@@ -642,6 +723,9 @@ export namespace Session {
     }
   }
 
+  /**
+   * 获取子会话列表
+   */
   export const children = fn(Identifier.schema("session"), async (parentID) => {
     const project = Instance.project
     const rows = Database.use((db) =>
@@ -654,6 +738,9 @@ export namespace Session {
     return rows.map(fromRow)
   })
 
+  /**
+   * 删除会话
+   */
   export const remove = fn(Identifier.schema("session"), async (sessionID) => {
     const project = Instance.project
     try {
@@ -676,6 +763,9 @@ export namespace Session {
     }
   })
 
+  /**
+   * 更新消息
+   */
   export const updateMessage = fn(MessageV2.Info, async (msg) => {
     const time_created = msg.time.created
     const { id, sessionID, ...data } = msg
@@ -698,6 +788,9 @@ export namespace Session {
     return msg
   })
 
+  /**
+   * 删除消息
+   */
   export const removeMessage = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -720,6 +813,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 删除消息片段
+   */
   export const removePart = fn(
     z.object({
       sessionID: Identifier.schema("session"),
@@ -745,6 +841,9 @@ export namespace Session {
 
   const UpdatePartInput = MessageV2.Part
 
+  /**
+   * 更新消息片段
+   */
   export const updatePart = fn(UpdatePartInput, async (part) => {
     const { id, messageID, sessionID, ...data } = part
     const time = Date.now()
@@ -768,6 +867,9 @@ export namespace Session {
     return part
   })
 
+  /**
+   * 更新消息片段的增量变化
+   */
   export const updatePartDelta = fn(
     z.object({
       sessionID: z.string(),
@@ -781,6 +883,9 @@ export namespace Session {
     },
   )
 
+  /**
+   * 计算模型使用量和费用
+   */
   export const getUsage = fn(
     z.object({
       model: z.custom<Provider.Model>(),
@@ -860,12 +965,20 @@ export namespace Session {
     },
   )
 
+  /**
+   * 会话繁忙错误
+   * 当会话正在处理请求时抛出
+   */
   export class BusyError extends Error {
     constructor(public readonly sessionID: string) {
       super(`Session ${sessionID} is busy`)
     }
   }
 
+  /**
+   * 初始化会话
+   * 发送初始命令设置会话环境
+   */
   export const initialize = fn(
     z.object({
       sessionID: Identifier.schema("session"),

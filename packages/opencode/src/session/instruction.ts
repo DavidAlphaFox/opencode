@@ -42,6 +42,10 @@ async function resolveRelative(instruction: string): Promise<string[]> {
   return Filesystem.globUp(instruction, Flag.OPENCODE_CONFIG_DIR, Flag.OPENCODE_CONFIG_DIR).catch(() => [])
 }
 
+/**
+ * InstructionPrompt 命名空间
+ * 处理指令文件的加载和解析
+ */
 export namespace InstructionPrompt {
   const state = Instance.state(() => {
     return {
@@ -65,10 +69,16 @@ export namespace InstructionPrompt {
     claimed.add(filepath)
   }
 
+  /**
+   * 清除指令声明
+   */
   export function clear(messageID: string) {
     state().claims.delete(messageID)
   }
 
+  /**
+   * 获取系统指令文件路径列表
+   */
   export async function systemPaths() {
     const config = await Config.get()
     const paths = new Set<string>()
@@ -114,6 +124,9 @@ export namespace InstructionPrompt {
     return paths
   }
 
+  /**
+   * 获取系统指令内容
+   */
   export async function system() {
     const config = await Config.get()
     const paths = await systemPaths()
@@ -141,6 +154,9 @@ export namespace InstructionPrompt {
     return Promise.all([...files, ...fetches]).then((result) => result.filter(Boolean))
   }
 
+  /**
+   * 获取已加载的指令文件
+   */
   export function loaded(messages: MessageV2.WithParts[]) {
     const paths = new Set<string>()
     for (const msg of messages) {
@@ -158,6 +174,9 @@ export namespace InstructionPrompt {
     return paths
   }
 
+  /**
+   * 查找目录中的指令文件
+   */
   export async function find(dir: string) {
     for (const file of FILES) {
       const filepath = path.resolve(path.join(dir, file))
@@ -165,6 +184,10 @@ export namespace InstructionPrompt {
     }
   }
 
+  /**
+   * 解析指令文件
+   * 向上查找目录直到找到指令文件
+   */
   export async function resolve(messages: MessageV2.WithParts[], filepath: string, messageID: string) {
     const system = await systemPaths()
     const already = loaded(messages)

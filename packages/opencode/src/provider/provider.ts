@@ -45,6 +45,10 @@ import { GoogleAuth } from "google-auth-library"
 import { ProviderTransform } from "./transform"
 import { Installation } from "../installation"
 
+/**
+ * Provider 命名空间 - 模型提供者管理
+ * 负责加载、配置和管理各种 AI 模型提供者
+ */
 export namespace Provider {
   const log = Log.create({ service: "provider" })
 
@@ -590,6 +594,10 @@ export namespace Provider {
     },
   }
 
+  /**
+   * 模型信息 schema
+   * 包含模型 ID、提供商、API 配置、能力、成本等信息
+   */
   export const Model = z
     .object({
       id: z.string(),
@@ -661,6 +669,10 @@ export namespace Provider {
     })
   export type Model = z.infer<typeof Model>
 
+  /**
+   * 提供商信息 schema
+   * 包含提供商 ID、名称、来源、环境变量、模型列表等
+   */
   export const Info = z
     .object({
       id: z.string(),
@@ -676,6 +688,11 @@ export namespace Provider {
     })
   export type Info = z.infer<typeof Info>
 
+  /**
+   * 将 models.dev 模型转换为 Provider 模型格式
+   * @param provider - models.dev 提供商数据
+   * @param model - models.dev 模型数据
+   */
   function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model): Model {
     const m: Model = {
       id: model.id,
@@ -743,6 +760,10 @@ export namespace Provider {
     return m
   }
 
+  /**
+   * 将 models.dev 提供商转换为 Provider 信息格式
+   * @param provider - models.dev 提供商数据
+   */
   export function fromModelsDevProvider(provider: ModelsDev.Provider): Info {
     return {
       id: provider.id,
@@ -1034,6 +1055,10 @@ export namespace Provider {
     }
   })
 
+  /**
+   * 列出所有可用的模型提供者
+   * 返回提供者 ID 到 Info 的映射
+   */
   export async function list() {
     return state().then((state) => state.providers)
   }
@@ -1143,10 +1168,19 @@ export namespace Provider {
     }
   }
 
+  /**
+   * 根据 ID 获取模型提供者信息
+   * @param providerID - 提供商 ID
+   */
   export async function getProvider(providerID: string) {
     return state().then((s) => s.providers[providerID])
   }
 
+  /**
+   * 根据提供商 ID 和模型 ID 获取模型信息
+   * @param providerID - 提供商 ID
+   * @param modelID - 模型 ID
+   */
   export async function getModel(providerID: string, modelID: string) {
     const s = await state()
     const provider = s.providers[providerID]
@@ -1167,6 +1201,11 @@ export namespace Provider {
     return info
   }
 
+  /**
+   * 获取模型的语言模型实例
+   * 用于与模型进行交互
+   * @param model - 模型信息
+   */
   export async function getLanguage(model: Model): Promise<LanguageModelV2> {
     const s = await state()
     const key = `${model.providerID}/${model.id}`
@@ -1194,6 +1233,11 @@ export namespace Provider {
     }
   }
 
+  /**
+   * 根据关键词查找最匹配的模型
+   * @param providerID - 提供商 ID
+   * @param query - 关键词列表
+   */
   export async function closest(providerID: string, query: string[]) {
     const s = await state()
     const provider = s.providers[providerID]
@@ -1209,6 +1253,11 @@ export namespace Provider {
     }
   }
 
+  /**
+   * 获取小型/快速模型
+   * 用于简单任务或作为主模型的补充
+   * @param providerID - 提供商 ID
+   */
   export async function getSmallModel(providerID: string) {
     const cfg = await Config.get()
 
@@ -1276,6 +1325,11 @@ export namespace Provider {
   }
 
   const priority = ["gpt-5", "claude-sonnet-4", "big-pickle", "gemini-3-pro"]
+  /**
+   * 对模型列表进行优先级排序
+   * 优先选择最新和最高优先级的模型
+   * @param models - 模型列表
+   */
   export function sort(models: Model[]) {
     return sortBy(
       models,
@@ -1285,6 +1339,10 @@ export namespace Provider {
     )
   }
 
+  /**
+   * 获取默认模型
+   * 优先使用配置中的模型，然后尝试使用最近使用的模型，最后选择优先级最高的模型
+   */
   export async function defaultModel() {
     const cfg = await Config.get()
     if (cfg.model) return parseModel(cfg.model)
@@ -1312,6 +1370,11 @@ export namespace Provider {
     }
   }
 
+  /**
+   * 解析模型字符串
+   * 格式: providerID/modelID (例如: openai/gpt-4)
+   * @param model - 模型字符串
+   */
   export function parseModel(model: string) {
     const [providerID, ...rest] = model.split("/")
     return {
@@ -1320,6 +1383,10 @@ export namespace Provider {
     }
   }
 
+  /**
+   * 模型未找到错误
+   * 当请求的模型不存在时抛出
+   */
   export const ModelNotFoundError = NamedError.create(
     "ProviderModelNotFoundError",
     z.object({
@@ -1329,6 +1396,10 @@ export namespace Provider {
     }),
   )
 
+  /**
+   * 提供商初始化错误
+   * 当提供商加载或初始化失败时抛出
+   */
   export const InitError = NamedError.create(
     "ProviderInitError",
     z.object({

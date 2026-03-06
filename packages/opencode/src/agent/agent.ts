@@ -20,7 +20,15 @@ import path from "path"
 import { Plugin } from "@/plugin"
 import { Skill } from "../skill"
 
+/**
+ * Agent 命名空间 - 代理配置与管理
+ * 包含内置代理和自定义代理的加载、配置和生成功能
+ */
 export namespace Agent {
+  /**
+   * Agent 配置信息 schema
+   * 包含代理名称、描述、模式、权限、模型等配置
+   */
   export const Info = z
     .object({
       name: z.string(),
@@ -250,10 +258,18 @@ export namespace Agent {
     return result
   })
 
+  /**
+   * 根据名称获取代理配置
+   * @param agent - 代理名称
+   */
   export async function get(agent: string) {
     return state().then((x) => x[agent])
   }
 
+  /**
+   * 列出所有可用的代理
+   * 按照默认代理优先排序
+   */
   export async function list() {
     const cfg = await Config.get()
     return pipe(
@@ -263,6 +279,10 @@ export namespace Agent {
     )
   }
 
+  /**
+   * 获取默认代理名称
+   * 优先使用配置中指定的默认代理，否则返回第一个可见的主代理
+   */
   export async function defaultAgent() {
     const cfg = await Config.get()
     const agents = await state()
@@ -280,6 +300,11 @@ export namespace Agent {
     return primaryVisible.name
   }
 
+  /**
+   * 根据描述生成新的代理配置
+   * 使用 AI 模型根据用户描述创建自定义代理
+   * @param input - 包含描述和可选模型信息的对象
+   */
   export async function generate(input: { description: string; model?: { providerID: string; modelID: string } }) {
     const cfg = await Config.get()
     const defaultModel = input.model ?? (await Provider.defaultModel())

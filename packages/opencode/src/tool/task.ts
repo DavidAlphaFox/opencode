@@ -24,6 +24,10 @@ const parameters = z.object({
   command: z.string().describe("The command that triggered this task").optional(),
 })
 
+/**
+ * 任务工具 - 用于调用子代理执行特定任务
+ * 可以创建新的子会话或恢复之前的任务
+ */
 export const TaskTool = Tool.define("task", async (ctx) => {
   const agents = await Agent.list().then((x) => x.filter((a) => a.mode !== "primary"))
 

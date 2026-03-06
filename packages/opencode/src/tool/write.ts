@@ -16,6 +16,10 @@ import { assertExternalDirectory } from "./external-directory"
 const MAX_DIAGNOSTICS_PER_FILE = 20
 const MAX_PROJECT_DIAGNOSTICS_FILES = 5
 
+/**
+ * 写入工具 - 用于创建新文件或覆盖现有文件内容
+ * 会生成 diff 并请求用户确认
+ */
 export const WriteTool = Tool.define("write", {
   description: DESCRIPTION,
   parameters: z.object({

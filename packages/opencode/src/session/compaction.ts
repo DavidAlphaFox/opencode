@@ -15,9 +15,16 @@ import { Plugin } from "@/plugin"
 import { Config } from "@/config/config"
 import { ProviderTransform } from "@/provider/transform"
 
+/**
+ * SessionCompaction 命名空间
+ * 处理会话消息的压缩功能，用于管理上下文长度
+ */
 export namespace SessionCompaction {
   const log = Log.create({ service: "session.compaction" })
 
+  /**
+   * 压缩事件定义
+   */
   export const Event = {
     Compacted: BusEvent.define(
       "session.compacted",
@@ -29,6 +36,9 @@ export namespace SessionCompaction {
 
   const COMPACTION_BUFFER = 20_000
 
+  /**
+   * 检查是否超出上下文限制
+   */
   export async function isOverflow(input: { tokens: MessageV2.Assistant["tokens"]; model: Provider.Model }) {
     const config = await Config.get()
     if (config.compaction?.auto === false) return false
@@ -55,6 +65,10 @@ export namespace SessionCompaction {
   // goes backwards through parts until there are 40_000 tokens worth of tool
   // calls. then erases output of previous tool calls. idea is to throw away old
   // tool calls that are no longer relevant.
+  /**
+   * 修剪旧的工具调用结果
+   * 释放上下文空间
+   */
   export async function prune(input: { sessionID: string }) {
     const config = await Config.get()
     if (config.compaction?.prune === false) return
@@ -98,6 +112,10 @@ export namespace SessionCompaction {
     }
   }
 
+  /**
+   * 处理会话压缩
+   * 创建对话摘要并继续会话
+   */
   export async function process(input: {
     parentID: string
     messages: MessageV2.WithParts[]
@@ -293,6 +311,9 @@ When constructing the summary, try to stick to this template:
     return "continue"
   }
 
+  /**
+   * 创建压缩请求
+   */
   export const create = fn(
     z.object({
       sessionID: Identifier.schema("session"),

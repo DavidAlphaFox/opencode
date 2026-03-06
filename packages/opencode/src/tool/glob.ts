@@ -7,6 +7,10 @@ import { Ripgrep } from "../file/ripgrep"
 import { Instance } from "../project/instance"
 import { assertExternalDirectory } from "./external-directory"
 
+/**
+ * Glob 工具 - 使用 glob 模式搜索文件
+ * 根据文件名模式查找匹配的文件
+ */
 export const GlobTool = Tool.define("glob", {
   description: DESCRIPTION,
   parameters: z.object({

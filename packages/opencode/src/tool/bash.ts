@@ -23,6 +23,9 @@ const DEFAULT_TIMEOUT = Flag.OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS || 2 
 
 export const log = Log.create({ service: "bash-tool" })
 
+/**
+ * 解析 WASM 资源路径
+ */
 const resolveWasm = (asset: string) => {
   if (asset.startsWith("file://")) return fileURLToPath(asset)
   if (asset.startsWith("/") || /^[a-z]:/i.test(asset)) return asset
@@ -51,6 +54,10 @@ const parser = lazy(async () => {
   return p
 })
 
+/**
+ * Bash 工具 - 用于执行命令行命令
+ * 解析命令以提取文件路径和模式，支持权限控制
+ */
 // TODO: we may wanna rename this tool so it works better on other shells
 export const BashTool = Tool.define("bash", async () => {
   const shell = Shell.acceptable()

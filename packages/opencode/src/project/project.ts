@@ -15,9 +15,19 @@ import { existsSync } from "fs"
 import { git } from "../util/git"
 import { Glob } from "../util/glob"
 
+/**
+ * 项目管理模块
+ * 负责项目信息的管理、数据库操作和项目发现
+ */
 export namespace Project {
   const log = Log.create({ service: "project" })
 
+  /**
+   * 从 git 路径获取规范化路径
+   * @param cwd 当前工作目录
+   * @param name git 输出的路径名
+   * @returns 规范化后的绝对路径
+   */
   function gitpath(cwd: string, name: string) {
     if (!name) return cwd
     // git output includes trailing newlines; keep path whitespace intact.
@@ -30,6 +40,10 @@ export namespace Project {
     return path.resolve(cwd, name)
   }
 
+  /**
+   * 项目信息类型定义
+   * 包含项目的 id、工作目录、VCS 信息、图标、命令和时间戳等
+   */
   export const Info = z
     .object({
       id: z.string(),
@@ -60,12 +74,20 @@ export namespace Project {
     })
   export type Info = z.infer<typeof Info>
 
+  /**
+   * 项目相关事件定义
+   */
   export const Event = {
     Updated: BusEvent.define("project.updated", Info),
   }
 
   type Row = typeof ProjectTable.$inferSelect
 
+  /**
+   * 从数据库行数据转换为项目信息对象
+   * @param row 数据库中的项目记录
+   * @returns 项目信息对象
+   */
   export function fromRow(row: Row): Info {
     const icon =
       row.icon_url || row.icon_color
@@ -87,6 +109,12 @@ export namespace Project {
     }
   }
 
+  /**
+   * 从指定目录加载或创建项目
+   * 自动检测 git 仓库并创建项目记录
+   * @param directory 项目目录路径
+   * @returns 包含项目信息和沙箱路径的对象
+   */
   export async function fromDirectory(directory: string) {
     log.info("fromDirectory", { directory })
 
@@ -272,6 +300,11 @@ export namespace Project {
     return { project: result, sandbox: data.sandbox }
   }
 
+  /**
+   * 发现并更新项目图标
+   * 扫描项目目录查找 favicon 文件并更新项目图标
+   * @param input 项目信息
+   */
   export async function discover(input: Info) {
     if (input.vcs !== "git") return
     if (input.icon?.override) return
@@ -318,6 +351,10 @@ export namespace Project {
     })
   }
 
+  /**
+   * 标记项目为已初始化
+   * @param id 项目 ID
+   */
   export function setInitialized(id: string) {
     Database.use((db) =>
       db
@@ -330,6 +367,10 @@ export namespace Project {
     )
   }
 
+  /**
+   * 获取所有项目列表
+   * @returns 所有项目信息的数组
+   */
   export function list() {
     return Database.use((db) =>
       db
@@ -340,12 +381,22 @@ export namespace Project {
     )
   }
 
+  /**
+   * 根据 ID 获取项目信息
+   * @param id 项目 ID
+   * @returns 项目信息，如果不存在则返回 undefined
+   */
   export function get(id: string): Info | undefined {
     const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
     if (!row) return undefined
     return fromRow(row)
   }
 
+  /**
+   * 更新项目信息
+   * @param input 包含项目 ID 和要更新的字段（名称、图标、命令）
+   * @returns 更新后的项目信息
+   */
   export const update = fn(
     z.object({
       projectID: z.string(),
@@ -380,6 +431,12 @@ export namespace Project {
     },
   )
 
+  /**
+   * 获取项目的有效沙箱目录列表
+   * 过滤掉不存在的目录
+   * @param id 项目 ID
+   * @returns 有效的沙箱目录数组
+   */
   export async function sandboxes(id: string) {
     const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
     if (!row) return []
@@ -392,6 +449,12 @@ export namespace Project {
     return valid
   }
 
+  /**
+   * 添加沙箱目录到项目
+   * @param id 项目 ID
+   * @param directory 要添加的沙箱目录路径
+   * @returns 更新后的项目信息
+   */
   export async function addSandbox(id: string, directory: string) {
     const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
     if (!row) throw new Error(`Project not found: ${id}`)
@@ -416,6 +479,12 @@ export namespace Project {
     return data
   }
 
+  /**
+   * 从项目中移除沙箱目录
+   * @param id 项目 ID
+   * @param directory 要移除的沙箱目录路径
+   * @returns 更新后的项目信息
+   */
   export async function removeSandbox(id: string, directory: string) {
     const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
     if (!row) throw new Error(`Project not found: ${id}`)

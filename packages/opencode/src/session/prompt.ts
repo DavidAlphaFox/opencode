@@ -59,6 +59,10 @@ IMPORTANT:
 
 const STRUCTURED_OUTPUT_SYSTEM_PROMPT = `IMPORTANT: The user has requested structured output. You MUST use the StructuredOutput tool to provide your final response. Do NOT respond with plain text - you MUST call the StructuredOutput tool with your answer formatted according to the schema.`
 
+/**
+ * SessionPrompt 命名空间
+ * 处理会话的提示词和循环处理逻辑
+ */
 export namespace SessionPrompt {
   const log = Log.create({ service: "session.prompt" })
 
@@ -83,11 +87,18 @@ export namespace SessionPrompt {
     },
   )
 
+  /**
+   * 断言会话不繁忙
+   * 如果会话正在处理请求则抛出错误
+   */
   export function assertNotBusy(sessionID: string) {
     const match = state()[sessionID]
     if (match) throw new Session.BusyError(sessionID)
   }
 
+  /**
+   * 提示词输入类型
+   */
   export const PromptInput = z.object({
     sessionID: Identifier.schema("session"),
     messageID: Identifier.schema("message").optional(),
@@ -155,6 +166,10 @@ export namespace SessionPrompt {
   })
   export type PromptInput = z.infer<typeof PromptInput>
 
+  /**
+   * 发送提示词到会话
+   * 创建用户消息并启动处理循环
+   */
   export const prompt = fn(PromptInput, async (input) => {
     const session = await Session.get(input.sessionID)
     await SessionRevert.cleanup(session)
@@ -184,6 +199,10 @@ export namespace SessionPrompt {
     return loop({ sessionID: input.sessionID })
   })
 
+  /**
+   * 解析提示词模板中的文件引用
+   * 将模板中的文件路径转换为消息片段
+   */
   export async function resolvePromptParts(template: string): Promise<PromptInput["parts"]> {
     const parts: PromptInput["parts"] = [
       {
@@ -235,6 +254,9 @@ export namespace SessionPrompt {
     return parts
   }
 
+  /**
+   * 启动会话处理
+   */
   function start(sessionID: string) {
     const s = state()
     if (s[sessionID]) return
@@ -246,6 +268,9 @@ export namespace SessionPrompt {
     return controller.signal
   }
 
+  /**
+   * 恢复会话处理
+   */
   function resume(sessionID: string) {
     const s = state()
     if (!s[sessionID]) return
@@ -253,6 +278,9 @@ export namespace SessionPrompt {
     return s[sessionID].abort.signal
   }
 
+  /**
+   * 取消会话处理
+   */
   export function cancel(sessionID: string) {
     log.info("cancel", { sessionID })
     const s = state()
@@ -267,10 +295,17 @@ export namespace SessionPrompt {
     return
   }
 
+  /**
+   * 循环输入类型
+   */
   export const LoopInput = z.object({
     sessionID: Identifier.schema("session"),
     resume_existing: z.boolean().optional(),
   })
+  /**
+   * 会话处理循环
+   * 处理用户消息、与AI模型交互、执行工具调用
+   */
   export const loop = fn(LoopInput, async (input) => {
     const { sessionID, resume_existing } = input
 
@@ -733,6 +768,9 @@ export namespace SessionPrompt {
   }
 
   /** @internal Exported for testing */
+  /**
+   * 解析可用的工具列表
+   */
   export async function resolveTools(input: {
     agent: Agent.Info
     model: Provider.Model
@@ -924,6 +962,10 @@ export namespace SessionPrompt {
   }
 
   /** @internal Exported for testing */
+  /**
+   * 创建结构化输出工具
+   * 用于要求模型返回JSON格式的输出
+   */
   export function createStructuredOutputTool(input: {
     schema: Record<string, any>
     onSuccess: (output: unknown) => void

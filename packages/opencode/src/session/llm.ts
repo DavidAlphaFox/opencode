@@ -23,10 +23,17 @@ import { Flag } from "@/flag/flag"
 import { PermissionNext } from "@/permission/next"
 import { Auth } from "@/auth"
 
+/**
+ * LLM 命名空间
+ * 提供与语言模型交互的流式处理功能
+ */
 export namespace LLM {
   const log = Log.create({ service: "llm" })
   export const OUTPUT_TOKEN_MAX = ProviderTransform.OUTPUT_TOKEN_MAX
 
+  /**
+   * 流式输入类型
+   */
   export type StreamInput = {
     user: MessageV2.User
     sessionID: string
@@ -43,6 +50,10 @@ export namespace LLM {
 
   export type StreamOutput = StreamTextResult<ToolSet, unknown>
 
+  /**
+   * 流式调用语言模型
+   * 发送消息并接收流式响应
+   */
   export async function stream(input: StreamInput) {
     const l = log
       .clone()
@@ -267,6 +278,9 @@ export namespace LLM {
 
   // Check if messages contain any tool-call content
   // Used to determine if a dummy tool should be added for LiteLLM proxy compatibility
+  /**
+   * 检查消息是否包含工具调用
+   */
   export function hasToolCalls(messages: ModelMessage[]): boolean {
     for (const msg of messages) {
       if (!Array.isArray(msg.content)) continue
