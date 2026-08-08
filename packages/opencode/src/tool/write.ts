@@ -29,8 +29,6 @@ export const Parameters = Schema.Struct({
  * 会生成 diff 并请求用户确认
  */
 export const WriteTool = Tool.define(
-
-export const WriteTool = Tool.define(
   "write",
   Effect.gen(function* () {
     const lsp = yield* LSP.Service

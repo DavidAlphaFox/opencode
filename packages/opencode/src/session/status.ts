@@ -12,6 +12,14 @@ import { SessionStatusEvent } from "@opencode-ai/schema/session-status-event"
 export const Info = SessionStatusEvent.Info
 export type Info = SessionStatusEvent.Info
 
+export const Event = SessionStatusEvent
+
+export interface Interface {
+  readonly get: (sessionID: SessionID) => Effect.Effect<Info>
+  readonly list: () => Effect.Effect<Map<SessionID, Info>>
+  readonly set: (sessionID: SessionID, status: Info) => Effect.Effect<void>
+}
+
 export class Service extends Context.Service<Service, Interface>()("@opencode/SessionStatus") {}
 
 const layer = Layer.effect(
