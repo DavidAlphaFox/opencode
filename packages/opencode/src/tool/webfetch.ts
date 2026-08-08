@@ -160,7 +160,6 @@ export const WebFetchTool = Tool.define(
 )
 
 function extractTextFromHTML(html: string) {
->>>>>>> origin/dev
   let text = ""
   let skipDepth = 0
 

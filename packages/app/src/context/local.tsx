@@ -57,7 +57,6 @@ const clone = (value: State | undefined) => {
     model: value.model ? { ...value.model } : undefined,
   } satisfies State
 }
->>>>>>> origin/dev
 
 export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
   name: "Local",
