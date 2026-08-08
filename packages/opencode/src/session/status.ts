@@ -1,95 +1,52 @@
-import { BusEvent } from "@/bus/bus-event"
-import { Bus } from "@/bus"
-import { Instance } from "@/project/instance"
-import z from "zod"
+import { LayerNode } from "@opencode-ai/core/effect/layer-node"
+import { InstanceState } from "@/effect/instance-state"
+import { SessionID } from "./schema"
+import { Effect, Layer, Context } from "effect"
+import { EventV2Bridge } from "@/event-v2-bridge"
+import { SessionStatusEvent } from "@opencode-ai/schema/session-status-event"
 
 /**
- * SessionStatus 命名空间
- * 管理会话状态（空闲、重试中、忙碌）
+ * SessionStatus 模块
+ * 管理会话状态（空闲、重试中、忙碌），基于 SessionStatusEvent
  */
-export namespace SessionStatus {
-  /**
-   * 会话状态信息类型
-   */
-  export const Info = z
-    .union([
-      z.object({
-        type: z.literal("idle"),
-      }),
-      z.object({
-        type: z.literal("retry"),
-        attempt: z.number(),
-        message: z.string(),
-        next: z.number(),
-      }),
-      z.object({
-        type: z.literal("busy"),
-      }),
-    ])
-    .meta({
-      ref: "SessionStatus",
-    })
-  export type Info = z.infer<typeof Info>
+export const Info = SessionStatusEvent.Info
+export type Info = SessionStatusEvent.Info
 
-  /**
-   * 会话状态事件定义
-   */
-  export const Event = {
-    Status: BusEvent.define(
-      "session.status",
-      z.object({
-        sessionID: z.string(),
-        status: Info,
-      }),
-    ),
-    // deprecated
-    Idle: BusEvent.define(
-      "session.idle",
-      z.object({
-        sessionID: z.string(),
-      }),
-    ),
-  }
+export class Service extends Context.Service<Service, Interface>()("@opencode/SessionStatus") {}
 
-  const state = Instance.state(() => {
-    const data: Record<string, Info> = {}
-    return data
-  })
+const layer = Layer.effect(
+  Service,
+  Effect.gen(function* () {
+    const events = yield* EventV2Bridge.Service
 
-  /**
-   * 获取会话状态
-   */
-  export function get(sessionID: string) {
-    return (
-      state()[sessionID] ?? {
-        type: "idle",
-      }
+    const state = yield* InstanceState.make(
+      Effect.fn("SessionStatus.state")(() => Effect.succeed(new Map<SessionID, Info>())),
     )
-  }
 
-  /**
-   * 列出所有会话状态
-   */
-  export function list() {
-    return state()
-  }
-
-  /**
-   * 设置会话状态
-   */
-  export function set(sessionID: string, status: Info) {
-    Bus.publish(Event.Status, {
-      sessionID,
-      status,
+    const get = Effect.fn("SessionStatus.get")(function* (sessionID: SessionID) {
+      const data = yield* InstanceState.get(state)
+      return data.get(sessionID) ?? { type: "idle" as const }
     })
-    if (status.type === "idle") {
-      // deprecated
-      Bus.publish(Event.Idle, {
-        sessionID,
-      })
-      delete state()[sessionID]
-      return
-    }
-    state()[sessionID] = status
-  }
-}
+
+    const list = Effect.fn("SessionStatus.list")(function* () {
+      return new Map(yield* InstanceState.get(state))
+    })
+
+    const set = Effect.fn("SessionStatus.set")(function* (sessionID: SessionID, status: Info) {
+      const data = yield* InstanceState.get(state)
+      yield* events.publish(Event.Status, { sessionID, status })
+      if (status.type === "idle") {
+        yield* events.publish(Event.Idle, { sessionID })
+        data.delete(sessionID)
+        return
+      }
+      data.set(sessionID, status)
+    })
+
+    return Service.of({ get, list, set })
+  }),
+)
+
+export const node = LayerNode.make({ service: Service, layer: layer, deps: [EventV2Bridge.node] })
+
+export * as SessionStatus from "./status"

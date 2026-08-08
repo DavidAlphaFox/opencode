@@ -1,9 +1,12 @@
+import { ScopedKey, type ServerScope } from "@/utils/server-scope"
+
 /**
  * 规范化目录路径
  * @param directory 目录路径
  * @returns 规范化后的路径
  */
 const normalize = (directory: string) => directory.replace(/[\\/]+$/, "")
+const key = (scope: ServerScope, directory: string) => ScopedKey.from(scope, normalize(directory))
 
 /**
  * 工作树状态
@@ -45,67 +48,72 @@ function deferred() {
  * 工作树管理器
  */
 export const Worktree = {
-  /**
+/**
    * 获取工作树状态
+   * @param scope 服务器作用域
    * @param directory 目录路径
    * @returns 工作树状态或 undefined
    */
-  get(directory: string) {
-    return state.get(normalize(directory))
+  get(scope: ServerScope, directory: string) {
+    return state.get(key(scope, directory))
   },
-  /**
+/**
    * 设置工作树为待处理状态
+   * @param scope 服务器作用域
    * @param directory 目录路径
    */
-  pending(directory: string) {
-    const key = normalize(directory)
-    const current = state.get(key)
+  pending(scope: ServerScope, directory: string) {
+    const id = key(scope, directory)
+    const current = state.get(id)
     if (current && current.status !== "pending") return
-    state.set(key, { status: "pending" })
+    state.set(id, { status: "pending" })
   },
-  /**
+/**
    * 设置工作树为就绪状态
+   * @param scope 服务器作用域
    * @param directory 目录路径
    */
-  ready(directory: string) {
-    const key = normalize(directory)
+  ready(scope: ServerScope, directory: string) {
+    const id = key(scope, directory)
     const next = { status: "ready" } as const
-    state.set(key, next)
-    const waiter = waiters.get(key)
+    state.set(id, next)
+    const waiter = waiters.get(id)
     if (!waiter) return
-    waiters.delete(key)
+    waiters.delete(id)
     waiter.resolve(next)
   },
-  /**
+/**
    * 设置工作树为失败状态
+   * @param scope 服务器作用域
    * @param directory 目录路径
    * @param message 错误信息
    */
-  failed(directory: string, message: string) {
-    const key = normalize(directory)
+  failed(scope: ServerScope, directory: string, message: string) {
+    const id = key(scope, directory)
     const next = { status: "failed", message } as const
-    state.set(key, next)
-    const waiter = waiters.get(key)
+    state.set(id, next)
+    const waiter = waiters.get(id)
     if (!waiter) return
-    waiters.delete(key)
+    waiters.delete(id)
     waiter.resolve(next)
   },
-  /**
+/**
    * 等待工作树状态变化
+   * @param scope 服务器作用域
    * @param directory 目录路径
    * @returns 状态变化的 Promise
    */
-  wait(directory: string) {
-    const key = normalize(directory)
-    const current = state.get(key)
+  wait(scope: ServerScope, directory: string) {
+    const id = key(scope, directory)
+    const current = state.get(id)
     if (current && current.status !== "pending") return Promise.resolve(current)
 
-    const existing = waiters.get(key)
+    const existing = waiters.get(id)
     if (existing) return existing.promise
 
     const waiter = deferred()
 
-    waiters.set(key, waiter)
+    waiters.set(id, waiter)
     return waiter.promise
   },
 }

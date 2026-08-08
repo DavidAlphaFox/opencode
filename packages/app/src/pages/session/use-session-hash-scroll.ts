@@ -1,17 +1,7 @@
+import type { UserMessage } from "@opencode-ai/sdk/v2"
+import { useLocation, useNavigate } from "@solidjs/router"
 import { createEffect, createMemo, onCleanup, onMount } from "solid-js"
-import { UserMessage } from "@opencode-ai/sdk/v2"
-
-/**
- * 从 URL 哈希值中提取消息 ID
- * @param hash - URL 哈希值
- * @returns 消息 ID，未匹配则返回 undefined
- */
-export const messageIdFromHash = (hash: string) => {
-  const value = hash.startsWith("#") ? hash.slice(1) : hash
-  const match = value.match(/^message-(.+)$/)
-  if (!match) return
-  return match[1]
-}
+import { messageIdFromHash } from "./message-id-from-hash"
 
 /**
  * 创建基于 URL 哈希的会话消息滚动控制器
@@ -23,30 +13,57 @@ export const useSessionHashScroll = (input: {
   sessionID: () => string | undefined
   messagesReady: () => boolean
   visibleUserMessages: () => UserMessage[]
-  turnStart: () => number
+  historyMore: () => boolean
+  historyLoading: () => boolean
+  loadMore: (sessionID: string) => Promise<void>
   currentMessageId: () => string | undefined
   pendingMessage: () => string | undefined
   setPendingMessage: (value: string | undefined) => void
   setActiveMessage: (message: UserMessage | undefined) => void
-  setTurnStart: (value: number) => void
   autoScroll: { pause: () => void; forceScrollToBottom: () => void }
   scroller: () => HTMLDivElement | undefined
   anchor: (id: string) => string
+  revealMessage?: (id: string) => void
   scheduleScrollState: (el: HTMLDivElement) => void
   consumePendingMessage: (key: string) => string | undefined
 }) => {
   const visibleUserMessages = createMemo(() => input.visibleUserMessages())
   const messageById = createMemo(() => new Map(visibleUserMessages().map((m) => [m.id, m])))
-  const messageIndex = createMemo(() => new Map(visibleUserMessages().map((m, i) => [m.id, i])))
   let pendingKey = ""
+  let clearing = false
+
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const frames = new Set<number>()
+  const queue = (fn: () => void) => {
+    const id = requestAnimationFrame(() => {
+      frames.delete(id)
+      fn()
+    })
+    frames.add(id)
+  }
+  const cancel = () => {
+    for (const id of frames) cancelAnimationFrame(id)
+    frames.clear()
+  }
 
   const clearMessageHash = () => {
-    if (!window.location.hash) return
-    window.history.replaceState(null, "", window.location.href.replace(/#.*$/, ""))
+    cancel()
+    input.consumePendingMessage(input.sessionKey())
+    if (input.pendingMessage()) input.setPendingMessage(undefined)
+    if (!location.hash) return
+    clearing = true
+    navigate(location.pathname + location.search, { replace: true })
   }
 
   const updateHash = (id: string) => {
-    window.history.replaceState(null, "", `#${input.anchor(id)}`)
+    const hash = `#${input.anchor(id)}`
+    if (location.hash === hash) return
+    clearing = false
+    navigate(location.pathname + location.search + hash, {
+      replace: true,
+    })
   }
 
   const scrollToElement = (el: HTMLElement, behavior: ScrollBehavior) => {
@@ -62,55 +79,32 @@ export const useSessionHashScroll = (input: {
     return true
   }
 
-  const scrollToMessage = (message: UserMessage, behavior: ScrollBehavior = "smooth") => {
-    if (input.currentMessageId() !== message.id) input.setActiveMessage(message)
-
-    const index = messageIndex().get(message.id) ?? -1
-    if (index !== -1 && index < input.turnStart()) {
-      input.setTurnStart(index)
-
-      requestAnimationFrame(() => {
-        const el = document.getElementById(input.anchor(message.id))
-        if (!el) {
-          requestAnimationFrame(() => {
-            const next = document.getElementById(input.anchor(message.id))
-            if (!next) return
-            scrollToElement(next, behavior)
-          })
-          return
-        }
-        scrollToElement(el, behavior)
-      })
-
-      updateHash(message.id)
-      return
-    }
-
-    const el = document.getElementById(input.anchor(message.id))
-    if (!el) {
-      updateHash(message.id)
-      requestAnimationFrame(() => {
-        const next = document.getElementById(input.anchor(message.id))
-        if (!next) return
-        if (!scrollToElement(next, behavior)) return
-      })
-      return
-    }
-    if (scrollToElement(el, behavior)) {
-      updateHash(message.id)
-      return
-    }
-
-    requestAnimationFrame(() => {
-      const next = document.getElementById(input.anchor(message.id))
-      if (!next) return
-      if (!scrollToElement(next, behavior)) return
+  const seek = (id: string, behavior: ScrollBehavior, left = 4): boolean => {
+    input.revealMessage?.(id)
+    const el = document.getElementById(input.anchor(id))
+    if (el) return scrollToElement(el, behavior)
+    if (left <= 0) return false
+    queue(() => {
+      seek(id, behavior, left - 1)
     })
+    return false
+  }
+
+  const scrollToMessage = (message: UserMessage, behavior: ScrollBehavior = "smooth") => {
+    cancel()
+    if (input.currentMessageId() !== message.id) input.setActiveMessage(message)
+    input.revealMessage?.(message.id)
+
+    if (seek(message.id, behavior)) {
+      updateHash(message.id)
+      return
+    }
+
     updateHash(message.id)
   }
 
   const applyHash = (behavior: ScrollBehavior) => {
-    const hash = window.location.hash.slice(1)
+    const hash = location.hash.slice(1)
     if (!hash) {
       input.autoScroll.forceScrollToBottom()
       const el = input.scroller()
@@ -142,15 +136,17 @@ export const useSessionHashScroll = (input: {
   }
 
   createEffect(() => {
+    const hash = location.hash
+    if (!hash) clearing = false
     if (!input.sessionID() || !input.messagesReady()) return
-    requestAnimationFrame(() => applyHash("auto"))
+    cancel()
+    queue(() => applyHash("auto"))
   })
 
   createEffect(() => {
     if (!input.sessionID() || !input.messagesReady()) return
 
     visibleUserMessages()
-    input.turnStart()
 
     let targetId = input.pendingMessage()
     if (!targetId) {
@@ -165,27 +161,43 @@ export const useSessionHashScroll = (input: {
       }
     }
 
-    if (!targetId) targetId = messageIdFromHash(window.location.hash)
+    if (!targetId && !clearing) targetId = messageIdFromHash(location.hash)
     if (!targetId) return
-    if (input.currentMessageId() === targetId) return
 
+    const pending = input.pendingMessage() === targetId
     const msg = messageById().get(targetId)
     if (!msg) return
 
-    if (input.pendingMessage() === targetId) input.setPendingMessage(undefined)
+    if (pending) input.setPendingMessage(undefined)
+    if (input.currentMessageId() === targetId && !pending) return
+
     input.autoScroll.pause()
-    requestAnimationFrame(() => scrollToMessage(msg, "auto"))
+    cancel()
+    queue(() => scrollToMessage(msg, "auto"))
+  })
+
+  createEffect(() => {
+    const sessionID = input.sessionID()
+    if (!sessionID || !input.messagesReady()) return
+
+    visibleUserMessages()
+
+    let targetId = input.pendingMessage()
+    if (!targetId && !clearing) targetId = messageIdFromHash(location.hash)
+    if (!targetId) return
+    if (messageById().has(targetId)) return
+    if (!input.historyMore() || input.historyLoading()) return
+
+    void input.loadMore(sessionID)
   })
 
   onMount(() => {
-    const handler = () => {
-      if (!input.sessionID() || !input.messagesReady()) return
-      requestAnimationFrame(() => applyHash("auto"))
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual"
     }
-
-    window.addEventListener("hashchange", handler)
-    onCleanup(() => window.removeEventListener("hashchange", handler))
   })
+
+  onCleanup(cancel)
 
   return {
     clearMessageHash,

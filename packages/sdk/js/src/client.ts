@@ -3,13 +3,33 @@ export * from "./gen/types.gen.js"
 import { createClient } from "./gen/client/client.gen.js"
 import { type Config } from "./gen/client/types.gen.js"
 import { OpencodeClient } from "./gen/sdk.gen.js"
+import { wrapClientError } from "./error-interceptor.js"
 export { type Config as OpencodeClientConfig, OpencodeClient }
 
-/**
- * 创建 Opencode 客户端实例
- * - 配置自定义 fetch（禁用超时）
- * - 如果指定了 directory，将其编码后添加到请求头中
- */
+function pick(value: string | null, fallback?: string) {
+  if (!value) return
+  if (!fallback) return value
+  if (value === fallback) return fallback
+  if (value === encodeURIComponent(fallback)) return fallback
+  return value
+}
+
+function rewrite(request: Request, directory?: string) {
+  if (request.method !== "GET" && request.method !== "HEAD") return request
+
+  const value = pick(request.headers.get("x-opencode-directory"), directory)
+  if (!value) return request
+
+  const url = new URL(request.url)
+  if (!url.searchParams.has("directory")) {
+    url.searchParams.set("directory", value)
+  }
+
+  const next = new Request(url, request)
+  next.headers.delete("x-opencode-directory")
+  return next
+}
+
 export function createOpencodeClient(config?: Config & { directory?: string }) {
   if (!config?.fetch) {
     const customFetch: any = (req: any) => {
@@ -31,5 +51,7 @@ export function createOpencodeClient(config?: Config & { directory?: string }) {
   }
 
   const client = createClient(config)
+  client.interceptors.request.use((request) => rewrite(request, config?.directory))
+  client.interceptors.error.use(wrapClientError)
   return new OpencodeClient({ client })
 }

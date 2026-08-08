@@ -1,4 +1,4 @@
-import { base64Decode } from "@opencode-ai/util/encode"
+import { base64Decode } from "@opencode-ai/core/util/encode"
 
 /**
  * 解码 base64 字符串

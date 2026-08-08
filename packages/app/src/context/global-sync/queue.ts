@@ -2,6 +2,7 @@ type QueueInput = {
   paused: () => boolean
   bootstrap: () => Promise<void>
   bootstrapInstance: (directory: string) => Promise<void> | void
+  key?: (directory: string) => string
 }
 
 /**
@@ -9,19 +10,21 @@ type QueueInput = {
  * 管理目录刷新的调度和执行
  */
 export function createRefreshQueue(input: QueueInput) {
-  const queued = new Set<string>()
+  const queued = new Map<string, string>()
   let root = false
   let running = false
   let timer: ReturnType<typeof setTimeout> | undefined
+
+  const key = input.key ?? ((directory: string) => directory)
 
   const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
   const take = (count: number) => {
     if (queued.size === 0) return [] as string[]
     const items: string[] = []
-    for (const item of queued) {
-      queued.delete(item)
-      items.push(item)
+    for (const [id, directory] of queued) {
+      queued.delete(id)
+      items.push(directory)
       if (items.length >= count) break
     }
     return items
@@ -37,7 +40,7 @@ export function createRefreshQueue(input: QueueInput) {
 
   const push = (directory: string) => {
     if (!directory) return
-    queued.add(directory)
+    queued.set(key(directory), directory)
     if (input.paused()) return
     schedule()
   }
@@ -67,6 +70,7 @@ export function createRefreshQueue(input: QueueInput) {
       }
     } finally {
       running = false
+      // oxlint-disable-next-line no-unsafe-finally -- intentional: early return skips schedule() when paused
       if (input.paused()) return
       if (root || queued.size) schedule()
     }
@@ -76,7 +80,7 @@ export function createRefreshQueue(input: QueueInput) {
     push,
     refresh,
     clear(directory: string) {
-      queued.delete(directory)
+      queued.delete(key(directory))
     },
     dispose() {
       if (!timer) return

@@ -1,5 +1,3 @@
-import z from "zod"
-
 /**
  * ID 前缀映射
  */
@@ -16,25 +14,13 @@ const LENGTH = 26
 let lastTimestamp = 0
 let counter = 0
 
-/**
- * ID 前缀类型
- */
 type Prefix = keyof typeof prefixes
-
 /**
- * ID 生成器命名空间
+ * 标识符命名空间
+ * 提供升序和降序 ID 生成功能
  */
 export namespace Identifier {
-  /**
-   * 创建 ID 验证模式
-   * @param 前缀
-   prefix ID * @returns Zod 验证模式
-   */
-  export function schema(prefix: Prefix) {
-    return z.string().startsWith(prefixes[prefix])
-  }
-
-  /**
+/**
    * 生成升序 ID
    * @param prefix ID 前缀
    * @param given 可选的指定 ID
@@ -44,7 +30,7 @@ export namespace Identifier {
     return generateID(prefix, false, given)
   }
 
-  /**
+/**
    * 生成降序 ID
    * @param prefix ID 前缀
    * @param given 可选的指定 ID
@@ -55,13 +41,6 @@ export namespace Identifier {
   }
 }
 
-/**
- * 生成 ID
- * @param prefix ID 前缀
- * @param descending 是否降序
- * @param given 可选的指定 ID
- * @returns 生成的 ID
- */
 function generateID(prefix: Prefix, descending: boolean, given?: string): string {
   if (!given) {
     return create(prefix, descending)
@@ -74,13 +53,6 @@ function generateID(prefix: Prefix, descending: boolean, given?: string): string
   return given
 }
 
-/**
- * 创建 ID
- * @param prefix ID 前缀
- * @param descending 是否降序
- * @param timestamp 可选的时间戳
- * @returns 生成的 ID
- */
 function create(prefix: Prefix, descending: boolean, timestamp?: number): string {
   const currentTimestamp = timestamp ?? Date.now()
 
@@ -105,11 +77,6 @@ function create(prefix: Prefix, descending: boolean, timestamp?: number): string
   return prefixes[prefix] + "_" + bytesToHex(timeBytes) + randomBase62(LENGTH - 12)
 }
 
-/**
- * 将字节数组转换为十六进制字符串
- * @param bytes 字节数组
- * @returns 十六进制字符串
- */
 function bytesToHex(bytes: Uint8Array): string {
   let hex = ""
   for (let i = 0; i < bytes.length; i += 1) {
@@ -118,11 +85,6 @@ function bytesToHex(bytes: Uint8Array): string {
   return hex
 }
 
-/**
- * 生成随机 Base62 字符串
- * @param length 字符串长度
- * @returns 随机字符串
- */
 function randomBase62(length: number): string {
   const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
   const bytes = getRandomBytes(length)
@@ -133,11 +95,6 @@ function randomBase62(length: number): string {
   return result
 }
 
-/**
- * 获取随机字节数组
- * @param length 字节数组长度
- * @returns 随机字节数组
- */
 function getRandomBytes(length: number): Uint8Array {
   const bytes = new Uint8Array(length)
   const cryptoObj = typeof globalThis !== "undefined" ? globalThis.crypto : undefined
